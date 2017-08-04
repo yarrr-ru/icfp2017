@@ -85,7 +85,9 @@ int64_t Map::get_score_by_river_owners(const std::vector<Punter>& river_owners, 
 }
 
 void Map::draw_graph() {
-  Drawer drawer("svg");
+  system("mkdir svg");
+  std::string dir = std::string("svg/") + std::to_string(punter);
+  Drawer drawer(dir);
   for (size_t i = 0; i < sites.size(); ++i) {
     if (is_lambda[i]) {
       drawer.point(coordinates[i], "red");
@@ -100,7 +102,7 @@ void Map::draw_graph() {
       if (edge.owner == punter) {
         color = "black";
       } else if (edge.owner != kNoOwner) {
-        color = "wheat";
+        color = "red";
       }
       drawer.line(coordinates[edge.from], 
           coordinates[edge.to], color);
