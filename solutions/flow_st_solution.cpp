@@ -7,6 +7,9 @@
 
 using namespace std;
 
+typedef pair<int, int> pii;
+typedef vector<pii> vpi;
+typedef vector<vpi> vvpi;
 typedef vector<int> vi;
 typedef vector<vi> vvi;
 
@@ -102,30 +105,92 @@ struct MaxFlow {
   }
 };
 
+struct Bfs {
+  int n;
+
+  Bfs(int n_) :n(n_) {
+    g.assign(n, vpi());
+  }
+
+  void add_edge(int v, int u, int c) {
+    g[v].eb(u, c);
+    g[u].eb(v, c);
+  }
+
+  vi get(int v) {
+    vi d(n, n);
+    d[v] = 0;
+    deque<int> q;
+    q.push_back(v);
+    while (!q.empty()) {
+      int v = q.front(); q.pop_front();
+      for (auto& e: g[v]) {
+        int u = e.fi;
+        int w = d[v] + e.se;
+        if (d[u] > d[v] + w) {
+          d[u] = d[v] + w;
+          if (w) q.push_back(u);
+          else q.push_front(u);
+        }
+      }
+    }
+    return d;
+  }
+
+  vvpi g;
+};
+
 River make_move_flow(const Map& map) {
   int n = map.graph.size();
   int inf_flow = 10000;
   MaxFlow mf(n);
+  Bfs bfs(n);
 
   for(auto& g: map.graph) {
     for(auto& e: g) {
+      if (e.from >= e.to) continue;
       int c;
       if (e.owner == map.punter) {
+        bf.add_edge(e.from, e.to, 0);
         c = inf_flow;
       } else if (e.owner == kNoOwner) {
+        bf.add_edge(e.from, e.to, 1);
         c = 1;
       } else {
         c = 0;
       }
+      // cerr << "add_edge " << e.from << ' ' << e.to << ' ' << c << '\n';\
       mf.add_edge(e.from, e.to, c);
     }
   }
   int k = map.lambda_vertices.size();
   vvi lf(k, vi(k, 0));
+  vvi bf(k, vi(k, 0));
+
+  // forn(i, k) {
+  //   int v = map.lambda_vertices[i];
+  //   vi d = bfs.get(v);
+  // }
+
+  vector<tuple<int, int, pii>> bf;
   forn(i, k) forn(j, i) {
     mf.clear();
-    lf[i][j] = lf[j][i] = mf.go(map.lambda_vertices[i], map.lambda_vertices[j]);
-    cerr << "flow " << i << " " << j << " " << lf[i][j] << '\n';
+    int v = map.lambda_vertices[i];
+    int u = map.lambda_vertices[j];
+    int f = lf[i][j] = lf[j][i] = mf.go(v, u);
+    if (f < inf_flow) {
+      bf.emplace(-f, bf[i][j], pii(v, u));
+    }
+  }
+  sort(all(bf));
+  for(auto& e: bf) {
+    cerr << "cand " << get<0>(e) << ' ' << get<1>(e) << ' '
+      << get<2>(e).fi << ' ' << get<2>(e).se << '\n';
+  }
+
+  if (!bf.empty()) {
+    int v = get<2>(bf[0]).fi;
+    int u = get<2>(bf[0]).se;
   }
 
   auto river_owners = map.river_owners;
