@@ -85,7 +85,7 @@ int64_t Map::get_score_by_river_owners(const std::vector<Punter>& river_owners, 
 }
 
 void Map::draw_graph(const std::vector<std::pair<size_t, size_t>>& claimed_rivers) {
-  auto return_code = system("mkdir svg -p");
+  auto return_code = system("mkdir -p svg");
   if (return_code != 0) {
     std::cerr << "unable to mkdir svg, return code: " << return_code;
     return;
