@@ -94,7 +94,7 @@ class OnlineRunner:
     print(stderr.decode('utf-8'), file=self.strategy_log_file)
     if end_time - start_time > timeout_seconds / 2:
       print('strategy run time exceeds half a timeout: %.3f, %.3f'
-          % (end_time - start_time, timeout_seconds))
+          % (end_time - start_time, timeout_seconds), file=self.runner_log_file)
     if proc.returncode != 0:
       raise RuntimeError(self.log_name + " returned with non-zero return code: " + str(proc.returncode))
     return self.receive_json_from_strategy(stdout)
@@ -146,7 +146,7 @@ class OnlineRunner:
       if move_loop_count > 0:
         for move in moves_json["move"]["moves"]:
           if "pass" in move and move["pass"]["punter"] == self.our_id:
-            print(self.log_name + ": passed on turn", move_loop_count - 1)
+            print(self.log_name + ": passed on turn", move_loop_count - 1, file=self.runner_log_file)
       state = new_move_json.pop("state")
 
       self.send_json(new_move_json)
@@ -177,7 +177,7 @@ def main():
 
   if len(STOP_JSONS) != len(args.binaries) or len(OUR_IDS) != len(args.binaries):
     print("Some threads failed")
-    return
+    sys.exit(1)
 
   scores_json = STOP_JSONS[0]["stop"]["scores"]
   scores = [] 
