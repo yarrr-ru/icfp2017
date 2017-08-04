@@ -122,7 +122,7 @@ void Map::build_graph() {
   for (size_t i = 0; i < rivers.size(); ++i) {
     Vertex u = vertex_id(rivers[i].first);
     Vertex v = vertex_id(rivers[i].second);
-    auto iterator = claims.find({u, v});
+    auto iterator = claims.find(rivers[i]);
     Punter owner = (iterator != claims.end()) ? iterator->second : kNoOwner;
     graph[u].emplace_back(u, v, owner, i);
     graph[v].emplace_back(v, u, owner, i);
