@@ -9,12 +9,13 @@ import threading
 
 BUFFER_SIZE = 4*1024
 
-
 def json_to_bytearray(json_data):
   s = json.dumps(json_data)
   s = str(len(s)) + ":" + s
   return bytearray(s, "utf-8")
 
+OUR_IDS = {}
+STOP_JSONS = []
 
 class OnlineRunner:
   def __init__(self, port, name, binary, index):
@@ -23,7 +24,7 @@ class OnlineRunner:
     self.binary = binary
     self.index = index
     self.protocol_log_file = open("protocol." + str(index) + ".log", "w")
-    self.runner_log_file = open("runner." + str(index) + ".log", "w")
+    self.runner_log_file = sys.stderr
     self.strategy_log_file = open("strategy." + str(index) + ".log", "w")
     self.data_queue = bytearray()
 
@@ -99,7 +100,8 @@ class OnlineRunner:
     setup_json = self.receive_json()
     self.our_id = setup_json["punter"]
     self.total_players = setup_json["punters"]
-    print('received setup json our_id: {} total players: {}'.format(self.our_id, self.total_players),
+    self.total_rivers = len(setup_json["map"]["rivers"])
+    print(self.name + ': received setup json our_id: {} total players: {}'.format(self.our_id, self.total_players),
         file=self.runner_log_file)
     ready_json = self.run_strategy(setup_json) 
     assert ready_json["ready"] == self.our_id
@@ -113,30 +115,26 @@ class OnlineRunner:
     self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
     state = self.setup()
-    print('strategy state size:', len(json.dumps(state)), file=self.runner_log_file)
+    print(self.name + ': strategy state size:', len(json.dumps(state)), file=self.runner_log_file)
 
+    move_loop_count = 0
+    total_move_loops = self.total_rivers // self.total_players
     while True:
       moves_json = self.receive_json()
-      print('received moves', file=self.runner_log_file)
+      print(self.name + ': received move loop #' + str(move_loop_count) + '/' + str(total_move_loops),
+          file=self.runner_log_file)
       moves_json["state"] = state
       new_move_json = self.run_strategy(moves_json)
       if "stop" in moves_json:
-        print("our id:", self.our_id)
-        scores = [0 for x in range(self.total_players)]
-        for score in moves_json["stop"]["scores"]:
-          cur_id = score["punter"]
-          cur_score = score["score"]
-          scores[cur_id] = cur_score
-          if score["punter"] == self.our_id:
-            print("our score:", cur_score)
-        print("all scores:", scores)
+        OUR_IDS[self.index] = self.our_id
+        STOP_JSONS.append(moves_json)
         break
       state = new_move_json.pop("state")
-      print('strategy state size:', len(json.dumps(state)), file=self.runner_log_file)
+      print(self.name + ': strategy state size:', len(json.dumps(state)), file=self.runner_log_file)
       self.send_json(new_move_json)
+      move_loop_count += 1
 
     self.protocol_log_file.close()
-    self.runner_log_file.close()
     self.strategy_log_file.close()
     
 
@@ -158,6 +156,14 @@ def main():
 
   for thread in threads:
     thread.join()
+
+  scores_json = STOP_JSONS[0]["stop"]["scores"]
+  scores = [0 for i in range(len(scores_json))]
+  for score in scores_json:
+    scores[score["punter"]] = score["score"]
+  strategy_scores = [scores[OUR_IDS[i]] for i in range(len(threads))]
+  print("our scores:", strategy_scores)
+  print("all scores:", scores)
 
 
 if __name__ == "__main__":
