@@ -116,7 +116,7 @@ def main():
   
   while True:
     moves_json = receive_json(sock)
-    print('received moves:', moves_json, file=sys.stderr)
+    print('received moves', file=sys.stderr)
     moves_json["state"] = state
     new_move_stdout, new_move_stderr = run_subprocess(args.binary).communicate(json_to_bytearray(moves_json))
     print('strategy stderr:\n' + new_move_stderr.decode('utf-8'), file=sys.stderr)
