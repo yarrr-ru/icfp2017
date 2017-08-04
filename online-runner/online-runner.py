@@ -91,10 +91,12 @@ class OnlineRunner:
     print('sending json to strategy:', json.dumps(json_data), file=self.protocol_log_file)
     stdout, stderr = proc.communicate(json_to_bytearray(json_data))
     end_time = time.time()
+    print(stderr.decode('utf-8'), file=self.strategy_log_file)
     if end_time - start_time > timeout_seconds / 2:
       print('strategy run time exceeds half a timeout: %.3f, %.3f'
           % (end_time - start_time, timeout_seconds))
-    print(stderr.decode('utf-8'), file=self.strategy_log_file)
+    if proc.returncode != 0:
+      raise RuntimeError(self.log_name + " returned with non-zero return code: " + str(proc.returncode))
     return self.receive_json_from_strategy(stdout)
 
   def online_handshake(self, name):
@@ -171,6 +173,10 @@ def main():
 
   for thread in threads:
     thread.join()
+
+  if len(STOP_JSONS) != len(args.binaries) or len(OUR_IDS) != len(args.binaries):
+    print("Some threads failed")
+    return
 
   scores_json = STOP_JSONS[0]["stop"]["scores"]
   scores = [] 
