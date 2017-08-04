@@ -45,7 +45,7 @@ public:
   std::vector<std::vector<Edge>> graph;
   std::vector<char> is_lambda;
   std::vector<Vertex> lambda_vertices;
-  std::vector<Point> coordinates;
+  std::vector<Punter> river_owners;
 
   explicit Map(const json& old_state);
   Map(const json& old_state, const json& moves);
@@ -57,6 +57,10 @@ public:
 
   River get_river(const Edge& edge) const {
     return rivers[edge.river_index];
+  }
+
+  River get_river(size_t river_index) const {
+    return rivers[river_index];
   }
 
   int64_t get_distance_from_lambda(Vertex lambda, Vertex target) const {
@@ -74,7 +78,11 @@ public:
 
   int64_t get_lambda_max_score(Vertex lambda) const;
 
-  int64_t get_score_by_river_owner(const std::vector<char>& is_river_owned) const;
+  int64_t get_score_by_river_owners(const std::vector<Punter>& river_owners, Punter owner) const;
+
+  size_t get_river_count() const {
+    return rivers.size();
+  }
 
   void draw_graph();
 
@@ -94,6 +102,7 @@ private:
   std::map<River, Punter> claims;
   std::vector<json> moves;
   std::vector<std::vector<int64_t>> distance_from_lambda;
+  std::vector<Point> coordinates;
 
   json json_state;
 };

@@ -61,8 +61,8 @@ int64_t Map::get_lambda_max_score(Vertex lambda) const {
 }
 
 
-int64_t Map::get_score_by_river_owner(const std::vector<char>& is_river_owned) const {
-  assert(is_river_owned.size() == rivers.size());
+int64_t Map::get_score_by_river_owners(const std::vector<Punter>& river_owners, Punter owner) const {
+  assert(river_owners.size() == rivers.size());
   std::vector<char> reached;
   std::queue<Vertex> q;
   int64_t score = 0;
@@ -73,7 +73,7 @@ int64_t Map::get_score_by_river_owner(const std::vector<char>& is_river_owned) c
       Vertex v = q.front();
       q.pop();
       for (auto& e : graph[v]) {
-        if (!reached[e.to] && is_river_owned[e.river_index]) {
+        if (!reached[e.to] && river_owners[e.river_index] == owner) {
           score += get_score_from_lambda(lambda, e.to);
           reached[e.to] = true;
           q.push(e.to);
@@ -117,6 +117,7 @@ void Map::build_graph() {
   graph.clear();
   is_lambda.clear();
   lambda_vertices.clear();
+  river_owners.assign(rivers.size(), kNoOwner);
   graph.resize(sites.size());
   for (size_t i = 0; i < rivers.size(); ++i) {
     Vertex u = vertex_id(rivers[i].first);
@@ -125,6 +126,7 @@ void Map::build_graph() {
     Punter owner = (iterator != claims.end()) ? iterator->second : kNoOwner;
     graph[u].emplace_back(u, v, owner, i);
     graph[v].emplace_back(v, u, owner, i);
+    river_owners[i] = owner;
   }
   is_lambda.assign(sites.size(), false);
   for (auto site : mines) {
