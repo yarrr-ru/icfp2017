@@ -6,6 +6,7 @@ import socket
 import subprocess
 import sys
 import threading
+import time
 
 BUFFER_SIZE = 4*1024
 
@@ -81,11 +82,15 @@ class OnlineRunner:
     print('received json from strategy:', json_data, file=self.protocol_log_file)
     return json_data
 
-  def run_strategy(self, json_data):
+  def run_strategy(self, json_data, timeout_seconds):
+    start_time = time.time()
     proc = subprocess.Popen([self.binary],
         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     print('sending json to strategy:', json_data, file=self.protocol_log_file)
     stdout, stderr = proc.communicate(json_to_bytearray(json_data))
+    end_time = time.time()
+    if end_time - start_time > timeout_seconds / 2:
+      print('strategy run time exceeds half a timeout: %.3f, %.3f' % (end_time - start_time, timeout_seconds)
     print(stderr.decode('utf-8'), file=self.strategy_log_file)
     return self.receive_json_from_strategy(stdout)
 
@@ -104,7 +109,7 @@ class OnlineRunner:
     self.total_rivers = len(setup_json["map"]["rivers"])
     print(self.log_name + ': received setup json our_id: {} total players: {}'.format(self.our_id, self.total_players),
         file=self.runner_log_file)
-    ready_json = self.run_strategy(setup_json) 
+    ready_json = self.run_strategy(setup_json, 10)
     assert ready_json["ready"] == self.our_id
     self.send_json({"ready": self.our_id})
     return ready_json["state"]
@@ -125,7 +130,7 @@ class OnlineRunner:
       print(self.log_name + ': received move loop #' + str(move_loop_count) + '/' + str(total_move_loops),
           file=self.runner_log_file)
       moves_json["state"] = state
-      new_move_json = self.run_strategy(moves_json)
+      new_move_json = self.run_strategy(moves_json, 1)
       if "stop" in moves_json:
         OUR_IDS[self.our_id] = self.index
         STOP_JSONS.append(moves_json)
