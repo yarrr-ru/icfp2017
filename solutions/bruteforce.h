@@ -108,8 +108,12 @@ private:
     Vertex vertex;
     std::vector<int64_t> distances;
     int64_t score;
+    bool is_lambda;
 
     bool operator<(const VertexWithDistances& other) const {
+      if (is_lambda != other.is_lambda) {
+        return is_lambda > other.is_lambda;
+      }
       if (distances != other.distances) {
         return distances < other.distances;
       }
@@ -172,46 +176,49 @@ private:
         if (!lambda_distances.empty()) {
           // std::cerr << "interesting lambda: " << lambda << std::endl;
           std::sort(lambda_distances.begin(), lambda_distances.end());
-          interesting_lambdas.push_back({lambda, lambda_distances, 0});
-          for (auto d : lambda_distances) {
+          interesting_lambdas.push_back({lambda, lambda_distances, 0, false});
+          /*for (auto d : lambda_distances) {
             std::cerr << d << " ";
           }
-          std::cerr << std::endl;
+          std::cerr << std::endl;*/
         }
       }
       //std::cerr << "done" << std::endl;
       if (!interesting_lambdas.empty()) {
         //std::cerr << "not empty" << std::endl;
-        std::random_shuffle(interesting_lambdas.begin(), interesting_lambdas.end());
-        std::stable_sort(interesting_lambdas.begin(), interesting_lambdas.end());
-        auto interesting_lambda = interesting_lambdas.front();
-        std::vector<VertexWithDistances> interesting_edges;
-        auto old_distances = build_personal_distances(player, interesting_lambda.vertex);
 
-        for (size_t edge = 0; edge < river_owners_.size(); edge++) {
-          auto& owner = river_owners_[edge];
-          if (owner == kNoOwner) {
-            owner = player;
-            auto new_distances = build_personal_distances(player, interesting_lambda.vertex);
-            std::vector<int64_t> new_lambda_distances;
-            for (auto other_lambda : lambdas_) {
-              auto old_distance = old_distances[other_lambda];
-              auto new_distance = new_distances[other_lambda];
-              if (old_distance > 0 && new_distance >= 0 && new_distance < remain_player_moves) {
-                new_lambda_distances.push_back(new_distance);
+        std::vector<VertexWithDistances> interesting_edges;
+
+        for (auto interesting_lambda : interesting_lambdas) {
+          auto old_distances = build_personal_distances(player, interesting_lambda.vertex);
+
+          for (size_t edge = 0; edge < river_owners_.size(); edge++) {
+            auto& owner = river_owners_[edge];
+            if (owner == kNoOwner) {
+              owner = player;
+              auto new_distances = build_personal_distances(player, interesting_lambda.vertex);
+              std::vector<int64_t> new_lambda_distances;
+              for (auto other_lambda : lambdas_) {
+                auto old_distance = old_distances[other_lambda];
+                auto new_distance = new_distances[other_lambda];
+                if (old_distance > 0 && new_distance >= 0 && new_distance < remain_player_moves) {
+                  new_lambda_distances.push_back(new_distance);
+                }
               }
-            }
-            if (!new_lambda_distances.empty()) {
-              /*std::cerr << "candidate: " << edge << " " << interesting_lambda.vertex << std::endl;
-              for (auto d : new_lambda_distances) {
-                std::cerr << d << " ";
+              auto river = map_.get_river(edge);
+              bool is_lambda = map_.is_lambda[river.first] || map_.is_lambda[river.second];
+              if (!new_lambda_distances.empty()) {
+                /*std::cerr << "candidate: " << edge << " " << interesting_lambda.vertex << std::endl;
+                for (auto d : new_lambda_distances) {
+                  std::cerr << d << " ";
+                }
+                std::cerr << std::endl;*/
+                auto new_score = map_.get_score_by_river_owners(river_owners_, player);
+                //std::cerr << "new score: " << new_score << std::endl;
+                std::sort(new_lambda_distances.begin(), new_lambda_distances.end());
+                interesting_edges.push_back({edge, new_lambda_distances, new_score, is_lambda});
+                owner = kNoOwner;
               }
-              std::cerr << std::endl;*/
-              auto new_score = map_.get_score_by_river_owners(river_owners_, player);
-              //std::cerr << "new score: " << new_score << std::endl;
-              std::sort(new_lambda_distances.begin(), new_lambda_distances.end());
-              interesting_edges.push_back({edge, new_lambda_distances, new_score});
-              owner = kNoOwner;
             }
           }
         }
@@ -265,11 +272,18 @@ public:
     srand(time(0));
 
     River best_move;
+    size_t repeats = 0;
 
-    for (size_t depth = 1; !timeout(); ++depth) {
+    for (size_t depth = 1; !timeout() && repeats <= 2 * map_.punters; ++depth) {
       std::cerr << "bruteforce depth: " << depth << std::endl;
       Searcher searcher(map_, depth);
-      best_move = searcher.solve();
+      auto new_best_move = searcher.solve();
+      if (new_best_move != best_move) {
+        repeats = 0;
+      } else {
+        ++repeats;
+      }
+      best_move = new_best_move;
     }
 
     return best_move;
@@ -278,7 +292,7 @@ public:
 private:
   bool timeout() const {
     auto elapsed_time = clock() - start_time_;
-    return elapsed_time > CLOCKS_PER_SEC;
+    return elapsed_time > 0.5 * CLOCKS_PER_SEC;
   }
 
   const Map& map_;
