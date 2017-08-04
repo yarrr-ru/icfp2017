@@ -15,7 +15,12 @@ public:
         max_river_index = std::max(max_river_index, edge.river_index);
       }
     }
-    edge_used_.assign(max_river_index + 1, false);
+    edge_used_.assign(max_river_index + 1, kNoOwner);
+    for (const auto& edges : map_.graph) {
+      for (const auto& edge : edges) {
+        edge_used_[edge.river_index] = edge.owner;
+      }
+    }
     std::cerr << "max_river_index: " << max_river_index << std::endl;
 
     return solve_impl(map_.punter, 0).best_move;
@@ -48,12 +53,46 @@ private:
     return score;
   }
 
-  Scores solve_greedy(size_t) {
-    return Scores(0, map_.punters);
+  Score evalutate(Punter) const {
+    return 0;
   }
 
-  State solve_impl(size_t player, size_t depth) {
-    static constexpr size_t kMaxEdgesPerNode = 3;
+  Scores solve_greedy(Punter player) const {
+    size_t remain_edges = 0;
+    auto edge_used = edge_used_;
+    for (const auto& owner : edge_used) {
+      if (owner == kNoOwner) {
+        ++remain_edges;
+      }
+    }
+    for (size_t it = 0; it < remain_edges; it++) {
+      Score best_score = -1;
+      size_t best_edge = 0;
+      for (size_t i = 0; i < edge_used.size(); i++) {
+        auto& owner = edge_used[i];
+        if (owner == kNoOwner) {
+          owner = player;
+          Score score = evalutate(player);
+          if (score > best_score) {
+            best_score = score;
+            best_edge = i;
+          }
+          owner = kNoOwner;
+        }
+      }
+      assert(best_score >= 0);
+      edge_used[best_edge] = player;
+      player = (player + 1) % map_.punters;
+    }
+    Scores scores(0, map_.punters);
+    for (player = 0; player < static_cast<Punter>(map_.punters); ++player) {
+      scores[player] = evalutate(player);
+    }
+    return scores;
+  }
+
+  State solve_impl(Punter player, size_t depth) {
+    static constexpr size_t kMaxEdgesPerNode = 5;
 
     std::cerr << "solve iteration" <<
         " player: " << player << 
@@ -61,12 +100,18 @@ private:
         " max_depth: " << max_depth_ << std::endl;
 
     if (depth == max_depth_) {
-      return State{{}, solve_greedy(player)};
+      auto result = State{{}, solve_greedy(player)};
+      std::cerr << "terminate state:";
+      for (size_t i = 0; i < map_.punters; i++) {
+        std::cerr << " " << result.scores[i];
+      }
+      std::cerr << std::endl;
+      return result;
     } else {
       std::vector<EdgeWithScore> scored_edges;
       for (const auto& edges : map_.graph) {
         for (const auto& edge : edges) {
-          bool unused_edge = edge.owner == kNoOwner && !edge_used_[edge.river_index];
+          bool unused_edge = edge_used_[edge.river_index] == kNoOwner;
           if (unused_edge) {
             double score = score_edge(edge);
             scored_edges.push_back(EdgeWithScore{edge, score});
@@ -81,7 +126,7 @@ private:
       for (const auto& edge_with_score : scored_edges) {
         const auto& edge = edge_with_score.edge;
         //  std::cout << "try get edge: " << edge.from << " " << edge.to << std::endl;
-        edge_used_[edge.river_index] = true;
+        edge_used_[edge.river_index] = player;
         size_t next_player = (player + 1) % map_.punters;
         auto state = solve_impl(next_player, depth + 1);
         if (state.better(player, result)) {
@@ -89,7 +134,7 @@ private:
           result.best_move = map_.get_river(edge);
           result.scores = state.scores;
         }
-        edge_used_[edge.river_index] = false;
+        edge_used_[edge.river_index] = kNoOwner;
       }
       
       return result;
@@ -98,7 +143,7 @@ private:
 
   const Map& map_;
   const size_t max_depth_;
-  std::vector<bool> edge_used_;
+  std::vector<Punter> edge_used_;
 };
 
 class Bruteforcer {
@@ -119,7 +164,7 @@ public:
 
 private:
   bool timeout(size_t depth) const {
-    return depth >= 2;
+    return depth > map_.punters;
   }
 
   const Map& map_;
