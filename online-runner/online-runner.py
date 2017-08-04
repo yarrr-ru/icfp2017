@@ -21,6 +21,7 @@ class OnlineRunner:
   def __init__(self, port, name, binary, index):
     self.port = port
     self.name = name + "." + str(index)
+    self.log_name = binary + "." + str(index)
     self.binary = binary
     self.index = index
     self.protocol_log_file = open("protocol." + str(index) + ".log", "w")
@@ -101,7 +102,7 @@ class OnlineRunner:
     self.our_id = setup_json["punter"]
     self.total_players = setup_json["punters"]
     self.total_rivers = len(setup_json["map"]["rivers"])
-    print(self.name + ': received setup json our_id: {} total players: {}'.format(self.our_id, self.total_players),
+    print(self.log_name + ': received setup json our_id: {} total players: {}'.format(self.our_id, self.total_players),
         file=self.runner_log_file)
     ready_json = self.run_strategy(setup_json) 
     assert ready_json["ready"] == self.our_id
@@ -115,13 +116,13 @@ class OnlineRunner:
     self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
     state = self.setup()
-    print(self.name + ': strategy state size:', len(json.dumps(state)), file=self.runner_log_file)
+    print(self.log_name + ': strategy state size:', len(json.dumps(state)), file=self.runner_log_file)
 
     move_loop_count = 0
     total_move_loops = self.total_rivers // self.total_players
     while True:
       moves_json = self.receive_json()
-      print(self.name + ': received move loop #' + str(move_loop_count) + '/' + str(total_move_loops),
+      print(self.log_name + ': received move loop #' + str(move_loop_count) + '/' + str(total_move_loops),
           file=self.runner_log_file)
       moves_json["state"] = state
       new_move_json = self.run_strategy(moves_json)
@@ -130,7 +131,7 @@ class OnlineRunner:
         STOP_JSONS.append(moves_json)
         break
       state = new_move_json.pop("state")
-      print(self.name + ': strategy state size:', len(json.dumps(state)), file=self.runner_log_file)
+      print(self.log_name + ': strategy state size:', len(json.dumps(state)), file=self.runner_log_file)
       self.send_json(new_move_json)
       move_loop_count += 1
 
