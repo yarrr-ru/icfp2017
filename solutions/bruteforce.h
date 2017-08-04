@@ -6,24 +6,16 @@ namespace impl {
 
 class Searcher {
 public:
-  Searcher(const Map& map, size_t max_depth) : map_(map), max_depth_(max_depth) {}
+  Searcher(const Map& map, size_t max_depth) :
+      map_(map),
+      max_depth_(max_depth),
+      edge_used_(map_.river_owners) {}
 
   River solve() {
-    size_t max_river_index = 0;
-    for (const auto& edges : map_.graph) {
-      for (const auto& edge : edges) {
-        max_river_index = std::max(max_river_index, edge.river_index);
-      }
-    }
-    edge_used_.assign(max_river_index + 1, kNoOwner);
-    for (const auto& edges : map_.graph) {
-      for (const auto& edge : edges) {
-        edge_used_[edge.river_index] = edge.owner;
-      }
-    }
-    std::cerr << "max_river_index: " << max_river_index << std::endl;
-
-    return solve_impl(map_.punter, 0).best_move;
+    auto result = solve_impl(map_.punter, 0);
+    std::cerr << "best found score: " << result.scores[map_.punter] << std::endl;
+    std::cerr << "best found move: " << result.best_move.first << " " << result.best_move.second << std::endl;
+    return result.best_move;
   }
 
 private:
@@ -49,22 +41,22 @@ private:
   double score_edge(const Edge& edge) {
     bool is_lambda = map_.is_lambda[edge.from] || map_.is_lambda[edge.to];
     double score = is_lambda ? 1 : 0;
-    std::cerr << "edge score: " << edge.from << " " << edge.to << " " << score << std::endl;
+    //std::cerr << "edge score: " << edge.from << " " << edge.to << " " << score << std::endl;
     return score;
   }
 
-  Score evalutate(Punter) const {
-    return 0;
-  }
-
   Scores solve_greedy(Punter player) const {
+    //std::cerr << "solve greedy" << std::endl;
     size_t remain_edges = 0;
     auto edge_used = edge_used_;
     for (const auto& owner : edge_used) {
       if (owner == kNoOwner) {
         ++remain_edges;
+      } else {
+        // std::cerr << "already: " << owner << std::endl;
       }
     }
+    // std::cerr << "remain edges: " << remain_edges << std::endl;
     for (size_t it = 0; it < remain_edges; it++) {
       Score best_score = -1;
       size_t best_edge = 0;
@@ -72,7 +64,8 @@ private:
         auto& owner = edge_used[i];
         if (owner == kNoOwner) {
           owner = player;
-          Score score = evalutate(player);
+          Score score = map_.get_score_by_river_owners(edge_used, player);
+          // std::cerr << "candidate: " << i << " " << score << std::endl;
           if (score > best_score) {
             best_score = score;
             best_edge = i;
@@ -80,32 +73,33 @@ private:
           owner = kNoOwner;
         }
       }
+      // std::cerr << "choose edge: " << player << " " << best_score << std::endl;
       assert(best_score >= 0);
       edge_used[best_edge] = player;
       player = (player + 1) % map_.punters;
     }
-    Scores scores(0, map_.punters);
+    Scores scores(map_.punters, 0);
     for (player = 0; player < static_cast<Punter>(map_.punters); ++player) {
-      scores[player] = evalutate(player);
+      scores[player] = map_.get_score_by_river_owners(edge_used, player);
     }
     return scores;
   }
 
   State solve_impl(Punter player, size_t depth) {
-    static constexpr size_t kMaxEdgesPerNode = 5;
+    static constexpr size_t kMaxEdgesPerNode = 3;
 
-    std::cerr << "solve iteration" <<
+    /*std::cerr << "solve iteration" <<
         " player: " << player << 
         " depth: " << depth << 
-        " max_depth: " << max_depth_ << std::endl;
+        " max_depth: " << max_depth_ << std::endl;*/
 
     if (depth == max_depth_) {
       auto result = State{{}, solve_greedy(player)};
-      std::cerr << "terminate state:";
+      /*std::cerr << "terminate state:";
       for (size_t i = 0; i < map_.punters; i++) {
         std::cerr << " " << result.scores[i];
       }
-      std::cerr << std::endl;
+      std::cerr << std::endl;*/
       return result;
     } else {
       std::vector<EdgeWithScore> scored_edges;
@@ -117,6 +111,9 @@ private:
             scored_edges.push_back(EdgeWithScore{edge, score});
           }
         }
+      }
+      if (scored_edges.empty()) {
+        return State{{}, solve_greedy(player)};
       }
       std::sort(scored_edges.begin(), scored_edges.end(), [](auto lhs, auto rhs) {
         return lhs.score > rhs.score;
@@ -164,7 +161,7 @@ public:
 
 private:
   bool timeout(size_t depth) const {
-    return depth > map_.punters;
+    return depth > 7;
   }
 
   const Map& map_;
