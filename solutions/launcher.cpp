@@ -7,7 +7,7 @@ json read_json() {
   char delim = 0;
   std::cin >> length >> delim;
   assert(delim == ':' && length > 0);
-  std::cerr << "read_json length: " << length << std::endl;
+  // std::cerr << "read_json length: " << length << std::endl;
   json result;
   std::cin >> result;
   return result;
@@ -16,33 +16,31 @@ json read_json() {
 void write_json(const json& result) {
   std::string s = result.dump();
   std::cout << s.length() << ':' << s;
-  std::cerr << "write_json length: " << s.length() << std::endl;
+  // std::cerr << "write_json length: " << s.length() << std::endl;
 }
 
 
 json setup(const json& request) {
-  std::cerr << "setup: " << request << std::endl;
+  // std::cerr << "setup: " << request << std::endl;
   Map map(request);
   json response;
   response["ready"] = map.punter;
   response["state"] = map.to_json();
-  std::cerr << "setup: " << map.punter << std::endl;
+  // std::cerr << "setup: " << map.punter << std::endl;
   return response;
 }
 
 json move(MakeMove make_move, const json& request) {
-  std::cerr << "move: " << request << std::endl;
+  // std::cerr << "move: " << request << std::endl;
   Map map(request["state"], request["move"]["moves"]);
   json response;
   response["state"] = map.to_json();
   // TODO(artem): measure time
   River r = make_move(map);
-  json move;
-  move["claim"]["punter"] = map.punter;
-  move["claim"]["source"] = r.first;
-  move["claim"]["target"] = r.second;
-  std::cerr << "made move: " << move << std::endl;
-  response["move"] = move;
+  response["claim"]["punter"] = map.punter;
+  response["claim"]["source"] = r.first;
+  response["claim"]["target"] = r.second;
+  std::cerr << "made move: " << r.first << " " << r.second << std::endl;
   return response;
 }
 

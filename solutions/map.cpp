@@ -56,7 +56,7 @@ void Map::build_graph() {
     Punter owner = (iterator != claims.end()) ? iterator->second : kNoOwner;
     graph[u].emplace_back(u, v, owner, i);
     graph[v].emplace_back(v, u, owner, i);
-    std::cerr << "add edge: " << u << " " << v << " owner: " << owner << std::endl;
+    // std::cerr << "add edge: " << u << " " << v << " owner: " << owner << std::endl;
   }
   is_lambda.assign(sites.size(), false);
   for (auto site : mines) {
@@ -76,7 +76,7 @@ void Map::add_claim(const json& claim) {
 }
 
 void Map::add_moves(const json& new_moves) {
-  for (auto& move: moves) {
+  for (auto& move: new_moves) {
     if (move.count("claim")) {
       add_claim(move["claim"]);
     } else {
