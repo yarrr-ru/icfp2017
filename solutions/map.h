@@ -43,6 +43,7 @@ public:
 
   std::vector<std::vector<Edge>> graph;
   std::vector<char> is_lambda;
+  std::vector<Vertex> lambda_vertices;
 
   explicit Map(const json& old_state);
   Map(const json& old_state, const json& moves);
@@ -56,20 +57,39 @@ public:
     return rivers[edge.river_index];
   }
 
+  int64_t get_distance_from_lambda(Vertex lambda, Vertex target) const {
+    assert(is_lambda[lambda]);
+    return distance_from_lambda[lambda][target];
+  }
+
+  int64_t get_score_from_lambda(Vertex lambda, Vertex target) const {
+    auto d = get_distance_from_lambda(lambda, target);
+    if (d == -1) {
+      return 0;
+    }
+    return d * d;
+  }
+
+  int64_t get_lambda_max_score(Vertex lambda) const;
+
+  int64_t get_score_by_river_owner(const std::vector<char>& is_river_owned) const;
+
 private:
   void add_moves(const json& new_moves);
 
   void add_claim(const json& claim);
 
-  size_t vertex_id(int32_t site);
+  Vertex vertex_id(Site site);
   void build_graph();
-  void clear_graph();
+  void fill_distances();
+  void fill_distances(Vertex lambda);
 
   std::vector<Site> sites;
   std::vector<Site> mines;
   std::vector<River> rivers;
   std::map<River, Punter> claims;
   std::vector<json> moves;
+  std::vector<std::vector<int64_t>> distance_from_lambda;
 
   json json_state;
 };

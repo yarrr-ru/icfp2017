@@ -1,5 +1,6 @@
 #include "map.h"
 #include <algorithm>
+#include <queue>
 
 Map::Map(const json& old_state) :
     punter(old_state["punter"]),
@@ -21,6 +22,12 @@ Map::Map(const json& old_state) :
   assert(mines.size() > 0);
   assert(sites.size() >= mines.size());
   assert(rivers.size() >= sites.size());
+}
+
+Map::Map(const json& old_state, const json& moves) : Map(old_state) {
+  add_moves(moves);
+  build_graph();
+  fill_distances();
   std::cerr << "map punter: " << punter <<
       " punters: " << punters <<
       " mines: " << mines.size() <<
@@ -29,38 +36,88 @@ Map::Map(const json& old_state) :
       " claims: " << claims.size() <<
       " moves: " << moves.size() <<
       std::endl;
-  build_graph();
 }
 
-Map::Map(const json& old_state, const json& moves) : Map(old_state) {
-  add_moves(moves);
-  clear_graph();
-  build_graph();
+int64_t Map::get_lambda_max_score(Vertex lambda) const {
+  int64_t score = 0;
+  for (Vertex to = 0; to < graph.size(); ++to) {
+    score += get_score_from_lambda(lambda, to);
+  }
+  return score;
 }
 
-size_t Map::vertex_id(int32_t size) {
+
+int64_t Map::get_score_by_river_owner(const std::vector<char>& is_river_owned) const {
+  assert(is_river_owned.size() == rivers.size());
+  std::vector<char> reached;
+  std::queue<Vertex> q;
+  int64_t score = 0;
+  for (Vertex lambda : lambda_vertices) {
+    reached.assign(graph.size(), false);
+    q.push(lambda);
+    while (!q.empty()) {
+      Vertex v = q.front();
+      q.pop();
+      for (auto& e : graph[v]) {
+        if (!reached[e.to] && is_river_owned[e.river_index]) {
+          score += get_score_from_lambda(lambda, e.to);
+          reached[e.to] = true;
+          q.push(e.to);
+        }
+      }
+    }
+  }
+  return score;
+}
+
+Vertex Map::vertex_id(Site size) {
   return std::lower_bound(sites.begin(), sites.end(), size) - sites.begin();
 }
 
-void Map::clear_graph() {
+void Map::build_graph() {
   graph.clear();
   is_lambda.clear();
-}
-
-void Map::build_graph() {
+  lambda_vertices.clear();
   graph.resize(sites.size());
   for (size_t i = 0; i < rivers.size(); ++i) {
-    size_t u = vertex_id(rivers[i].first);
-    size_t v = vertex_id(rivers[i].second);
+    Vertex u = vertex_id(rivers[i].first);
+    Vertex v = vertex_id(rivers[i].second);
     auto iterator = claims.find({u, v});
     Punter owner = (iterator != claims.end()) ? iterator->second : kNoOwner;
     graph[u].emplace_back(u, v, owner, i);
     graph[v].emplace_back(v, u, owner, i);
-    // std::cerr << "add edge: " << u << " " << v << " owner: " << owner << std::endl;
   }
   is_lambda.assign(sites.size(), false);
   for (auto site : mines) {
     is_lambda[vertex_id(site)] = true;
+    lambda_vertices.push_back(vertex_id(site));
+  }
+}
+
+void Map::fill_distances() {
+  distance_from_lambda.clear();
+  distance_from_lambda.resize(graph.size());
+  for (Vertex lambda : lambda_vertices) {
+    fill_distances(lambda);
+  }
+}
+
+void Map::fill_distances(Vertex lambda) {
+  distance_from_lambda[lambda].assign(graph.size(), -1);
+  std::queue<Vertex> q;
+  distance_from_lambda[lambda][lambda] = 0;
+  q.push(lambda);
+  while (!q.empty()) {
+    Vertex v = q.front();
+    q.pop();
+    auto new_distance = distance_from_lambda[lambda][v] + 1;
+    for (auto& e : graph[v]) {
+      auto& old_distance = distance_from_lambda[lambda][e.to];
+      if (old_distance == -1 || old_distance > new_distance) {
+        old_distance = new_distance;
+        q.push(e.to);
+      }
+    }
   }
 }
 

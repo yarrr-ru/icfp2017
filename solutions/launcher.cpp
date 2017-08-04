@@ -35,7 +35,6 @@ json move(MakeMove make_move, const json& request) {
   Map map(request["state"], request["move"]["moves"]);
   json response;
   response["state"] = map.to_json();
-  // TODO(artem): measure time
   River r = make_move(map);
   response["claim"]["punter"] = map.punter;
   response["claim"]["source"] = r.first;
@@ -44,8 +43,8 @@ json move(MakeMove make_move, const json& request) {
   return response;
 }
 
-void stop(const json& request) {
-  std::cerr << "stop: " << request << std::endl;
+void stop(const json&) {
+  std::cerr << "stop: " << std::endl;
 }
 
 void timeout(const json& request) {
