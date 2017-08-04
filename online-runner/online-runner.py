@@ -8,6 +8,7 @@ import sys
 
 BUFFER_SIZE = 4*1024
 
+PROTOCOL_LOG_FILE = open("protocol.log", "w")
 
 def json_to_bytearray(json_data):
   s = json.dumps(json_data)
@@ -16,13 +17,14 @@ def json_to_bytearray(json_data):
 
 
 def send_json(sock, json_data):
-  print('sending json to server:', json_data)
+  print('sending json to server:', json_data, file=PROTOCOL_LOG_FILE)
   data_to_send = json_to_bytearray(json_data)
   data_sent = sock.send(data_to_send)
   assert data_sent == len(data_to_send)
 
 
 def send_json_to_strategy(strategy, json_data):
+  print('sending json to strategy:', json_data, file=PROTOCOL_LOG_FILE)
   data_to_send = json_to_bytearray(json_data)
   data_sent = strategy.stdin.write(data_to_send)
   assert data_sent == len(data_to_send)
@@ -54,8 +56,9 @@ def receive_json(sock):
       data.extend(data_queue[:need_length])
       data_queue = data_queue[need_length:]
 
-  return json.loads(data.decode("utf-8"))
-
+  json_data = json.loads(data.decode("utf-8"))
+  print('received json from server:', json_data, file=PROTOCOL_LOG_FILE)
+  return json_data
 
 def receive_json_from_strategy(stdout_data):
   expected_length = 0
@@ -67,7 +70,9 @@ def receive_json_from_strategy(stdout_data):
     else:
       expected_length = 10 * expected_length + b - ord('0')
   data = stdout_data[prefix_length:expected_length+prefix_length]
-  return json.loads(data.decode('utf-8'))
+  json_data = json.loads(data.decode("utf-8"))
+  print('received json from strategy:', json_data, file=PROTOCOL_LOG_FILE)
+  return json_data
 
 
 def online_handshake(sock, name):
@@ -79,7 +84,9 @@ def online_handshake(sock, name):
 def run_subprocess(binary):
   return subprocess.Popen([binary], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
+
 SERVER = "punter.inf.ed.ac.uk"
+
 
 def main():
   parser = argparse.ArgumentParser()
@@ -120,6 +127,7 @@ def main():
     print('strategy state size:', len(json.dumps(state)), file=sys.stderr)
     send_json(sock, new_move_json)
 
+  PROTOCOL_LOG_FILE.close()
 
 if __name__ == "__main__":
   main()
