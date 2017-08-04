@@ -107,9 +107,13 @@ private:
   struct VertexWithDistances {
     Vertex vertex;
     std::vector<int64_t> distances;
+    int64_t score;
 
     bool operator<(const VertexWithDistances& other) const {
-      return distances < other.distances;
+      if (distances != other.distances) {
+        return distances < other.distances;
+      }
+      return score > other.score;
     }
   };
 
@@ -147,8 +151,7 @@ private:
       (remain_edges + map_.punters - 1) / map_.punters
     );
 
-
-    //std::cerr << "solve_impl: " << player << " " << depth << " " << remain_edges << " " << remain_player_moves << std::endl;
+    // std::cerr << "solve_impl: " << player << " " << depth << " " << remain_edges << " " << remain_player_moves << std::endl;
 
     if (remain_edges == 0) {
       return State{{}, build_current_scores(river_owners_)};
@@ -167,13 +170,13 @@ private:
           }
         }
         if (!lambda_distances.empty()) {
-          //std::cerr << "interesting lambda: " << lambda << std::endl;
+          // std::cerr << "interesting lambda: " << lambda << std::endl;
           std::sort(lambda_distances.begin(), lambda_distances.end());
-          interesting_lambdas.push_back({lambda, lambda_distances});
-          /*for (auto d : lambda_distances) {
+          interesting_lambdas.push_back({lambda, lambda_distances, 0});
+          for (auto d : lambda_distances) {
             std::cerr << d << " ";
           }
-          std::cerr << std::endl;*/
+          std::cerr << std::endl;
         }
       }
       //std::cerr << "done" << std::endl;
@@ -204,11 +207,12 @@ private:
                 std::cerr << d << " ";
               }
               std::cerr << std::endl;*/
-
+              auto new_score = map_.get_score_by_river_owners(river_owners_, player);
+              //std::cerr << "new score: " << new_score << std::endl;
               std::sort(new_lambda_distances.begin(), new_lambda_distances.end());
-              interesting_edges.push_back({edge, new_lambda_distances});
+              interesting_edges.push_back({edge, new_lambda_distances, new_score});
+              owner = kNoOwner;
             }
-            owner = kNoOwner;
           }
         }
 
@@ -219,7 +223,7 @@ private:
         std::random_shuffle(interesting_edges.begin(), interesting_edges.end());
         std::stable_sort(interesting_edges.begin(), interesting_edges.end());
 
-        static constexpr size_t kBruteforceWidth = 3;
+        static constexpr size_t kBruteforceWidth = 5;
         if (interesting_edges.size() > kBruteforceWidth) {
           interesting_edges.resize(kBruteforceWidth);
         }
@@ -227,7 +231,7 @@ private:
         State best_state;
 
         for (auto interesting_edge : interesting_edges) {
-          //std::cerr << "watch: " << interesting_edge.vertex << std::endl;
+          // std::cerr << "watch: " << interesting_edge.vertex << " " << interesting_edge.score << std::endl;
           auto edge = interesting_edge.vertex;
           auto& owner = river_owners_[edge];
           assert(owner == kNoOwner);
@@ -262,7 +266,7 @@ public:
 
     River best_move;
 
-    for (size_t depth = 1; !timeout() && depth <= 1; ++depth) {
+    for (size_t depth = 1; !timeout(); ++depth) {
       std::cerr << "bruteforce depth: " << depth << std::endl;
       Searcher searcher(map_, depth);
       best_move = searcher.solve();
