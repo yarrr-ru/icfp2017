@@ -3,8 +3,10 @@
 #include <queue>
 #include <cassert>
 
-std::pair<int64_t, std::vector<Edge>> get_path(Vertex from, Vertex to, const Map& map, const std::vector<Punter>& river_owners) {
-  std::vector<Edge> path;
+using Paths = std::vector<std::tuple<int64_t, Vertex, Vertex, Path>>;
+
+std::pair<int64_t, Path> get_path(Vertex from, Vertex to, const Map& map, const std::vector<Punter>& river_owners) {
+  Path path;
   if (map.get_distance_from_lambda(from, to) < 0) {
     return {-1, path};
   }
@@ -72,15 +74,14 @@ Edge get_worst_edge(Vertex from, Vertex to, const Map& map) {
   return e;
 }
 
-River make_move_greed_only_st(const Map& map) {
-  std::vector<std::tuple<int64_t, Vertex, Vertex, std::vector<Edge>>> paths;
-  auto river_owners = map.river_owners;
+Paths make_paths_between_lambdas(const Map& map) {
+  Paths paths;
   for (Vertex u : map.lambda_vertices) {
     for (Vertex v : map.lambda_vertices) {
       if (u >= v) {
         continue;
       }
-      auto p = get_path(u, v, map, river_owners);
+      auto p = get_path(u, v, map, map.river_owners);
       if (p.first <= 0) {
         continue;
       }
@@ -90,7 +91,10 @@ River make_move_greed_only_st(const Map& map) {
   std::sort(paths.begin(), paths.end(),
       [](auto& a, auto& b) { return std::get<0>(a) < std::get<0>(b); }
   );
+  return paths;
+}
 
+River make_move_surround_lamdas_with_paths(const Map& map, const Paths& paths) {
   for (auto& p : paths) {
     if (map.is_lambda[std::get<3>(p).front().from] ||
         map.is_lambda[std::get<3>(p).front().to]) {
@@ -101,14 +105,51 @@ River make_move_greed_only_st(const Map& map) {
       return map.get_river(std::get<3>(p).back());
     }
   }
+  return {0, 0};
+}
 
+River make_move_surround_all_lamdas(const Map& map) {
+  auto r = make_move_surround_lamdas_with_paths(map, make_paths_between_lambdas(map));
+  if (r.first != r.second) {
+    return r;
+  }
+  std::vector<std::pair<size_t, River>> free_lambdas;
+  for (Vertex lambda : map.lambda_vertices) {
+    size_t empty = 0;
+    River one;
+    for (auto& e : map.graph[lambda]) {
+      if (e.owner == kNoOwner) {
+        empty++;
+        one = map.get_river(e);
+      }
+    }
+    if (empty != 0) {
+      free_lambdas.emplace_back(empty, one);
+    }
+  }
+
+  if (!free_lambdas.empty()) {
+    std::sort(free_lambdas.begin(), free_lambdas.end());
+    return free_lambdas.front().second;
+  }
+  return {0, 0};
+}
+
+River make_move_greed_only_st(const Map& map) {
+  auto paths = make_paths_between_lambdas(map);
+  auto river_owners = map.river_owners;
   if (paths.empty()) {
     return {0,0};
   }
+
+  River r = make_move_surround_lamdas_with_paths(map, paths);
+  if (r.first != r.second) {
+    return r;
+  }
+
   auto u = std::get<1>(paths.front());
   auto v = std::get<2>(paths.front());
   auto shortest = std::get<3>(paths.front());
-  River r = {0, 0};
   int64_t worst_dist = 0;
   for (auto& e_to_remove : shortest) {
     river_owners[e_to_remove.river_index] = map.punters;
@@ -150,5 +191,13 @@ River make_move_greed_st(const Map& map) {
     return r;
   }
   return make_move_greed(map);
+}
+
+River make_move_greed_surround_st(const Map& map) {
+  River r = make_move_surround_all_lamdas(map);
+  if (r.first != r.second) {
+    return r;
+  }
+  return make_move_greed_st(map);
 }
 
