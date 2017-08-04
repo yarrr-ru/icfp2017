@@ -126,7 +126,7 @@ class OnlineRunner:
       moves_json["state"] = state
       new_move_json = self.run_strategy(moves_json)
       if "stop" in moves_json:
-        OUR_IDS[self.index] = self.our_id
+        OUR_IDS[self.our_id] = self.index
         STOP_JSONS.append(moves_json)
         break
       state = new_move_json.pop("state")
@@ -161,9 +161,15 @@ def main():
   scores = [0 for i in range(len(scores_json))]
   for score in scores_json:
     scores[score["punter"]] = score["score"]
-  strategy_scores = [scores[OUR_IDS[i]] for i in range(len(threads))]
-  print("our scores:", strategy_scores)
-  print("all scores:", scores)
+  print("Score:")
+  lines = []
+  for i in range(len(scores)):
+    line = str(scores[i])
+    if i in OUR_IDS:
+      index = OUR_IDS[i]
+      line += " (" + args.binaries[index] + "." + str(index) + ")"
+    lines.append(line)
+  print(", ".join(lines))
 
 
 if __name__ == "__main__":
