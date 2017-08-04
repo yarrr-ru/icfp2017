@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import progressbar
 import socket
 import subprocess
 import sys
@@ -17,6 +18,7 @@ def json_to_bytearray(json_data):
 
 OUR_IDS = {}
 STOP_JSONS = []
+PROGRESS_BAR = None
 
 class OnlineRunner:
   def __init__(self, port, name, binary, index):
@@ -90,7 +92,8 @@ class OnlineRunner:
     stdout, stderr = proc.communicate(json_to_bytearray(json_data))
     end_time = time.time()
     if end_time - start_time > timeout_seconds / 2:
-      print('strategy run time exceeds half a timeout: %.3f, %.3f' % (end_time - start_time, timeout_seconds)
+      print('strategy run time exceeds half a timeout: %.3f, %.3f'
+          % (end_time - start_time, timeout_seconds))
     print(stderr.decode('utf-8'), file=self.strategy_log_file)
     return self.receive_json_from_strategy(stdout)
 
@@ -121,14 +124,15 @@ class OnlineRunner:
     self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
     state = self.setup()
-    print(self.log_name + ': strategy state size:', len(json.dumps(state)), file=self.runner_log_file)
 
     move_loop_count = 0
     total_move_loops = self.total_rivers // self.total_players
+    if self.index == 0:
+      PROGRESS_BAR = progressbar.ProgressBar(max_value=total_move_loops)
     while True:
+      if self.index == 0:
+        PROGRESS_BAR.update(move_loop_count)
       moves_json = self.receive_json()
-      print(self.log_name + ': received move loop #' + str(move_loop_count) + '/' + str(total_move_loops),
-          file=self.runner_log_file)
       moves_json["state"] = state
       new_move_json = self.run_strategy(moves_json, 1)
       if "stop" in moves_json:
@@ -136,7 +140,6 @@ class OnlineRunner:
         STOP_JSONS.append(moves_json)
         break
       state = new_move_json.pop("state")
-      print(self.log_name + ': strategy state size:', len(json.dumps(state)), file=self.runner_log_file)
       self.send_json(new_move_json)
       move_loop_count += 1
 
@@ -167,7 +170,7 @@ def main():
   scores = [0 for i in range(len(scores_json))]
   for score in scores_json:
     scores[score["punter"]] = score["score"]
-  print("Score:")
+  print("\nScore:")
   lines = []
   for i in range(len(scores)):
     line = str(scores[i])
