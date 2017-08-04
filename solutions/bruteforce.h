@@ -145,12 +145,12 @@ private:
 
 class Bruteforcer {
 public:
-  Bruteforcer(const Map& map) : map_(map) {}
+  Bruteforcer(const Map& map) : map_(map), start_time_(clock()) {}
 
   River solve() {
     River best_move;
 
-    for (size_t depth = 1; !timeout(depth); ++depth) {
+    for (size_t depth = 1; !timeout(); ++depth) {
       std::cerr << "bruteforce depth: " << depth << std::endl;
       Searcher searcher(map_, depth);
       best_move = searcher.solve();
@@ -160,11 +160,13 @@ public:
   }
 
 private:
-  bool timeout(size_t depth) const {
-    return depth > 7;
+  bool timeout() const {
+    auto elapsed_time = clock() - start_time_;
+    return elapsed_time > CLOCKS_PER_SEC;
   }
 
   const Map& map_;
+  clock_t start_time_;
 };
 
 }
