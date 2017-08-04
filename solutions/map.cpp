@@ -111,7 +111,7 @@ void Map::draw_graph(const std::vector<std::pair<size_t, size_t>>& claimed_river
       }
 
       const size_t width = std::binary_search(
-          claimed_rivers.begin(), claimed_rivers.end(), std::make_pair(edge.to, edge.from)) ? 5 : 1;
+          claimed_rivers.begin(), claimed_rivers.end(), std::make_pair(edge.to, edge.from)) ? 5 : 2;
 
       drawer.line(coordinates[edge.from], coordinates[edge.to], color, width);
     }
