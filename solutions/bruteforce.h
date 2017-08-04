@@ -16,7 +16,7 @@ public:
       }
     }
     edge_used_.assign(max_river_index + 1, false);
-    std::cout << "max_river_index: " << max_river_index << std::endl;
+    std::cerr << "max_river_index: " << max_river_index << std::endl;
 
     return solve_impl(map_.punter, 0).best_move;
   }
@@ -44,7 +44,7 @@ private:
   double score_edge(const Edge& edge) {
     bool is_lambda = map_.is_lambda[edge.from] || map_.is_lambda[edge.to];
     double score = is_lambda ? 1 : 0;
-    std::cout << "edge score: " << edge.from << " " << edge.to << " " << score << std::endl;
+    std::cerr << "edge score: " << edge.from << " " << edge.to << " " << score << std::endl;
     return score;
   }
 
@@ -55,7 +55,7 @@ private:
   State solve_impl(size_t player, size_t depth) {
     static constexpr size_t kMaxEdgesPerNode = 3;
 
-    std::cout << "solve iteration" <<
+    std::cerr << "solve iteration" <<
         " player: " << player << 
         " depth: " << depth << 
         " max_depth: " << max_depth_ << std::endl;
@@ -109,7 +109,7 @@ public:
     River best_move;
 
     for (size_t depth = 1; !timeout(depth); ++depth) {
-      std::cout << "bruteforce depth: " << depth << std::endl;
+      std::cerr << "bruteforce depth: " << depth << std::endl;
       Searcher searcher(map_, depth);
       best_move = searcher.solve();
     }
