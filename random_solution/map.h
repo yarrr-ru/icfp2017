@@ -37,7 +37,7 @@ json read_json();
 void write_json(const json& result);
 
 inline River make_river(const json& river) {
-    return {river["source"], river["target"]};
+  return {river["source"], river["target"]};
 }
 
 class Map {
@@ -51,7 +51,7 @@ public:
   std::vector<json> moves;
 
   std::vector<std::vector<Edge>> graph;
-  std::vector<char> is_mine;
+  std::vector<char> is_lambda;
 
   explicit Map(const json& old_state);
   Map(const json& old_state, const json& moves);

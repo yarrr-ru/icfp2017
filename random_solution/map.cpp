@@ -60,7 +60,7 @@ size_t Map::vertex_id(int32_t size) {
 
 void Map::clear_graph() {
   graph.clear();
-  is_mine.clear();
+  is_lambda.clear();
 }
 
 void Map::build_graph() {
@@ -70,9 +70,9 @@ void Map::build_graph() {
     size_t v = vertex_id(rivers[i].second);
     graph[u].emplace_back(u, v, kNoOwner, i);
   }
-  is_mine.assign(sites.size(), false);
+  is_lambda.assign(sites.size(), false);
   for (auto site : mines) {
-    is_mine[vertex_id(site)] = true;
+    is_lambda[vertex_id(site)] = true;
   }
 }
 
