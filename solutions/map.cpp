@@ -129,6 +129,7 @@ void Map::build_graph() {
   lambda_vertices.clear();
   river_owners.assign(rivers.size(), kNoOwner);
   graph.resize(sites.size());
+  std::cerr << "rebuild" << std::endl;
   for (size_t i = 0; i < rivers.size(); ++i) {
     Vertex u = vertex_id(rivers[i].first);
     Vertex v = vertex_id(rivers[i].second);
