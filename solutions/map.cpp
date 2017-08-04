@@ -1,26 +1,10 @@
 #include "map.h"
 #include <algorithm>
 
-json read_json() {
-  size_t length = 0;
-  char delim = 0;
-  std::cin >> length >> delim;
-  assert(delim == ':' && length > 0);
-  std::cerr << "read_json length: " << length << std::endl;
-  json result;
-  std::cin >> result;
-  return result;
-}
-
-void write_json(const json& result) {
-  std::string s = result.dump();
-  std::cout << s.length() << ':' << s;
-  std::cerr << "write_json length: " << s.length() << std::endl;
-}
-
-Map::Map(const json& old_state) : json_state(old_state) {
-  punter = json_state["punter"];
-  punters = json_state["punters"];
+Map::Map(const json& old_state) :
+    punter(old_state["punter"]),
+    punters(old_state["punters"]),
+    json_state(old_state) {
   assert(punters > 1);
   assert(static_cast<size_t>(punter) < punters);
   add_moves(json_state["moves"]);

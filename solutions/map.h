@@ -32,23 +32,14 @@ struct Edge {
   }
 };
 
-json read_json();
-
-void write_json(const json& result);
-
 inline River make_river(const json& river) {
   return {river["source"], river["target"]};
 }
 
 class Map {
 public:
-  Punter punter;
-  size_t punters;
-  std::vector<Site> sites;
-  std::vector<Site> mines;
-  std::vector<River> rivers;
-  std::map<River, Punter> claims;
-  std::vector<json> moves;
+  const Punter punter;
+  const size_t punters;
 
   std::vector<std::vector<Edge>> graph;
   std::vector<char> is_lambda;
@@ -61,6 +52,10 @@ public:
     return json_state;
   }
 
+  River get_river(const Edge& edge) const {
+    return rivers[edge.river_index];
+  }
+
 private:
   void add_moves(const json& new_moves);
 
@@ -69,6 +64,12 @@ private:
   size_t vertex_id(int32_t site);
   void build_graph();
   void clear_graph();
+
+  std::vector<Site> sites;
+  std::vector<Site> mines;
+  std::vector<River> rivers;
+  std::map<River, Punter> claims;
+  std::vector<json> moves;
 
   json json_state;
 };

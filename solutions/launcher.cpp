@@ -2,6 +2,24 @@
 
 namespace {
 
+json read_json() {
+  size_t length = 0;
+  char delim = 0;
+  std::cin >> length >> delim;
+  assert(delim == ':' && length > 0);
+  std::cerr << "read_json length: " << length << std::endl;
+  json result;
+  std::cin >> result;
+  return result;
+}
+
+void write_json(const json& result) {
+  std::string s = result.dump();
+  std::cout << s.length() << ':' << s;
+  std::cerr << "write_json length: " << s.length() << std::endl;
+}
+
+
 json setup(const json& request) {
   std::cerr << "setup: " << request << std::endl;
   Map map(request);
