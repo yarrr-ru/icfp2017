@@ -47,7 +47,7 @@ def receive_json(sock):
   data = bytearray()
   while len(data) != expected_length:
     need_length = expected_length - len(data)
-    if len(data_queue) <= need_length:
+    if len(data_queue) < need_length:
       data.extend(data_queue)
       data_queue = sock.recv(BUFFER_SIZE)
     else:
@@ -93,7 +93,6 @@ def main():
   sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
   online_handshake(sock, args.name)
-
   setup_json = receive_json(sock)
   print(
       'received setup json our_id: {} total players: {}'.format(
