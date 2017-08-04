@@ -61,9 +61,9 @@ public:
     return json_state;
   }
 
+private:
   void add_moves(const json& new_moves);
 
-private:
   void add_claim(const json& claim);
 
   size_t vertex_id(int32_t site);
