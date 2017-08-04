@@ -1,4 +1,5 @@
 #include "launcher.h"
+#include "greed.h"
 #include <algorithm>
 #include <vector>
 
@@ -70,6 +71,9 @@ River make_move_maximizing_cut(const Map& map) {
     }
   }
   std::cerr << "best score " << max_score << std::endl;
+  if (max_score <= 1) {
+    return make_move_greed_only_st(map);
+  }
 
   return best_river;
 }
