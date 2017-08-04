@@ -101,11 +101,9 @@ def main():
 
   online_handshake(sock, args.name)
   setup_json = receive_json(sock)
-  print(
-      'received setup json our_id: {} total players: {}'.format(
-          setup_json["punter"], setup_json["punters"]),
-      file=sys.stderr)
   our_id = setup_json["punter"]
+  total_players = setup_json["punters"]
+  print('received setup json our_id: {} total players: {}'.format(our_id, total_players), file=sys.stderr)
   setup_stdout, setup_stderr = run_subprocess(args.binary).communicate(json_to_bytearray(setup_json))
   print('strategy stderr:\n' + setup_stderr.decode('utf-8'), file=sys.stderr)
   ready_json = receive_json_from_strategy(setup_stdout)
@@ -121,6 +119,15 @@ def main():
     new_move_stdout, new_move_stderr = run_subprocess(args.binary).communicate(json_to_bytearray(moves_json))
     print('strategy stderr:\n' + new_move_stderr.decode('utf-8'), file=sys.stderr)
     if "stop" in moves_json:
+      print("our id:", our_id)
+      scores = [0 for x in range(total_players)]
+      for score in moves_json["stop"]["scores"]:
+        cur_id = score["punter"]
+        cur_score = score["score"]
+        scores[cur_id] = cur_score
+        if score["punter"] == our_id:
+          print("our score:", cur_score)
+      print("all scores:", scores)
       break
     new_move_json = receive_json_from_strategy(new_move_stdout)
     state = new_move_json.pop("state")
