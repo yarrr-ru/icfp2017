@@ -82,6 +82,9 @@ void Map::add_claim(const json& claim) {
   assert(static_cast<size_t>(p) < punters);
   bool added = claims.emplace(r, p).second;
   assert(added);
+  std::swap(r.first, r.second);
+  added = claims.emplace(r, p).second;
+  assert(added);
 }
 
 void Map::add_moves(const json& new_moves) {

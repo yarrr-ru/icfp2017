@@ -12,7 +12,7 @@ json setup(const json& request) {
 
 River make_move(const Map& map) {
   for (auto r : map.rivers) {
-    if (!map.claims.count(r) && !map.claims.count({r.second, r.first})) {
+    if (!map.claims.count(r)) {
       return r;
     }
   }
