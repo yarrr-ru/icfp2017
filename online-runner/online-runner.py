@@ -112,7 +112,7 @@ def main():
     print('received moves:', moves_json, file=sys.stderr)
     moves_json["state"] = state
     new_move_stdout, new_move_stderr = run_subprocess(args.binary).communicate(json_to_bytearray(moves_json))
-    print('strategy stderr:\n' + new_move_stdout.decode('utf-8'), file=sys.stderr)
+    print('strategy stderr:\n' + new_move_stderr.decode('utf-8'), file=sys.stderr)
     if "stop" in moves_json:
       break
     new_move_json = receive_json_from_strategy(new_move_stdout)
