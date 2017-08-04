@@ -167,19 +167,20 @@ def main():
     thread.join()
 
   scores_json = STOP_JSONS[0]["stop"]["scores"]
-  scores = [0 for i in range(len(scores_json))]
+  scores = [] 
   for score in scores_json:
-    scores[score["punter"]] = score["score"]
-  print("\nScore:")
-  lines = []
-  for i in range(len(scores)):
-    line = str(scores[i])
-    if i in OUR_IDS:
-      index = OUR_IDS[i]
-      line += " (" + args.binaries[index] + "." + str(index) + ")"
-    lines.append(line)
-  print(", ".join(lines))
+    punter_id = score["punter"]
+    punter_name = "unknown player"
+    if punter_id in OUR_IDS:
+      index = OUR_IDS[punter_id]
+      punter_name = args.binaries[index] + "." + str(index)
+    scores.append((score["score"], punter_name))
+  scores = sorted(scores, reverse=True)
+  max_value = scores[0][0]
 
+  print("\nScores:")
+  for score in scores:
+    print(score[0], score[1])
 
 if __name__ == "__main__":
   main()
