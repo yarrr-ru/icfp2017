@@ -116,8 +116,9 @@ class OnlineRunner:
         file=self.runner_log_file)
     ready_json = self.run_strategy(setup_json, 10)
     assert ready_json["ready"] == self.our_id
-    self.send_json({"ready": self.our_id})
-    return ready_json["state"]
+    state = ready_json.pop("state")
+    self.send_json(ready_json)
+    return state
 
 
   def __call__(self):
