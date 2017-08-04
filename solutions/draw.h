@@ -43,8 +43,8 @@ public:
   void close();
 
 private:
-  static constexpr size_t kWidth = 1024;
-  static constexpr const size_t kHeight = 768;
+  static constexpr size_t kWidth = 2000;
+  static constexpr const size_t kHeight = 1000;
   static constexpr const size_t kBorder = 20;
   static constexpr const size_t kCircleRadius = 3;
 

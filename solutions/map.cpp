@@ -96,11 +96,11 @@ void Map::draw_graph() {
       if (edge.to > edge.from) {
         continue;
       }
-      std::string color = "black";
+      std::string color = "lightgray";
       if (edge.owner == punter) {
-        color = "green";
+        color = "black";
       } else if (edge.owner != kNoOwner) {
-        color = "red";
+        color = "wheat";
       }
       drawer.line(coordinates[edge.from], 
           coordinates[edge.to], color);
