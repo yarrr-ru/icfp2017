@@ -99,7 +99,7 @@ def main():
       file=sys.stderr)
   our_id = setup_json["punter"]
   setup_stdout, setup_stderr = run_subprocess(args.binary).communicate(json_to_bytearray(setup_json))
-  print('strategy stderr: ' + setup_stderr.decode('utf-8'), file=sys.stderr)
+  print('strategy stderr:\n' + setup_stderr.decode('utf-8'), file=sys.stderr)
   ready_json = receive_json_from_strategy(setup_stdout)
   assert ready_json["ready"] == our_id
   state = ready_json["state"]
@@ -111,7 +111,7 @@ def main():
     moves_json["state"] = state
     print('received moves', file=sys.stderr)
     new_move_stdout, new_move_stderr = run_subprocess(args.binary).communicate(json_to_bytearray(moves_json))
-    print('strategy stderr: ' + new_move_stdout.decode('utf-8'), file=sys.stderr)
+    print('strategy stderr:\n' + new_move_stdout.decode('utf-8'), file=sys.stderr)
     if "stop" in moves_json:
       break
     new_move_json = receive_json_from_strategy(new_move_stdout)
