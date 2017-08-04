@@ -45,7 +45,7 @@ River make_move_maximizing_cut(const Map& map) {
       continue;
     }
     for (auto edge : map.graph[u]) {
-      if (reserved_edge(map, edge)) {
+      if (edge.owner != kNoOwner) {
         continue;
       }
       size_t v = edge.to;
@@ -55,7 +55,7 @@ River make_move_maximizing_cut(const Map& map) {
       assert(vertex_type[v] == BORDER);
       int32_t score = 0;
       for (auto new_edge : map.graph[v]) {
-        if (reserved_edge(map, edge)) {
+        if (edge.owner != kNoOwner) {
           continue;
         }
         size_t w = new_edge.to;
