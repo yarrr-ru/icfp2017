@@ -1,6 +1,7 @@
 //
 #pragma once
 #include "json.hpp"
+#include "draw.h"
 #include <vector>
 #include <map>
 #include <iostream>
@@ -44,6 +45,7 @@ public:
   std::vector<std::vector<Edge>> graph;
   std::vector<char> is_lambda;
   std::vector<Vertex> lambda_vertices;
+  std::vector<Point> coordinates;
 
   explicit Map(const json& old_state);
   Map(const json& old_state, const json& moves);
@@ -73,6 +75,8 @@ public:
   int64_t get_lambda_max_score(Vertex lambda) const;
 
   int64_t get_score_by_river_owner(const std::vector<char>& is_river_owned) const;
+
+  void draw_graph();
 
 private:
   void add_moves(const json& new_moves);

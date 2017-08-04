@@ -13,6 +13,19 @@ Map::Map(const json& old_state) :
     sites.push_back(site["id"]);
   }
   std::sort(sites.begin(), sites.end());
+
+  coordinates.resize(sites.size());
+  for (auto& site : json_state["map"]["sites"]) {
+    if (site.count("x") && site.count("y")) {
+      size_t index = vertex_id(site["id"]);
+      if (site.count("x") && site.count("y")) {
+        coordinates[index] = Point(site["x"], site["y"]);
+      } else {
+        coordinates[index] = Point(0, 0);
+      }
+    }
+  }
+
   for (auto& river : json_state["map"]["rivers"]) {
     rivers.push_back(make_river(river));
   }
@@ -27,6 +40,7 @@ Map::Map(const json& old_state) :
 Map::Map(const json& old_state, const json& moves) : Map(old_state) {
   add_moves(moves);
   build_graph();
+  draw_graph();
   fill_distances();
   std::cerr << "map punter: " << punter <<
       " punters: " << punters <<
@@ -68,6 +82,31 @@ int64_t Map::get_score_by_river_owner(const std::vector<char>& is_river_owned) c
     }
   }
   return score;
+}
+
+void Map::draw_graph() {
+  Drawer drawer("svg");
+  for (size_t i = 0; i < sites.size(); ++i) {
+    if (is_lambda[i]) {
+      drawer.point(coordinates[i], "red");
+    } else {
+      drawer.point(coordinates[i], "blue");
+    }
+    for (auto edge : graph[i]) {
+      if (edge.to > edge.from) {
+        continue;
+      }
+      std::string color = "black";
+      if (edge.owner == punter) {
+        color = "green";
+      } else if (edge.owner != kNoOwner) {
+        color = "red";
+      }
+      drawer.line(coordinates[edge.from], 
+          coordinates[edge.to], color);
+    }
+  }
+  drawer.close();
 }
 
 Vertex Map::vertex_id(Site size) {
