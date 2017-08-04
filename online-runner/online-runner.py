@@ -1,8 +1,8 @@
-#! /usr/bin/python3
+#!/usr/bin/env python3
 
 import argparse
-import json 
-import socket 
+import json
+import socket
 import subprocess
 
 BUFFER_SIZE = 4*1024
@@ -15,7 +15,7 @@ def json_to_bytearray(json_data):
 
 
 def send_json(sock, json_data):
-  data_to_send = json_to_bytearray(json_data) 
+  data_to_send = json_to_bytearray(json_data)
   data_sent = sock.send(data_to_send)
   assert data_sent == len(data_to_send)
 
@@ -41,7 +41,7 @@ def receive_json(sock):
     else:
       expected_length = 10 * expected_length + c - ord('0')
   data_queue = data_queue[prefix_length:]
-  
+
   data = bytearray()
   while len(data) != expected_length:
     need_length = expected_length - len(data)
@@ -83,7 +83,7 @@ def main():
 
   sock = socket.socket()
   sock.connect((args.server, int(args.port)))
-  
+
   online_handshake(sock, args.name)
 
   state = {}
