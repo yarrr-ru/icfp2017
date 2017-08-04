@@ -21,8 +21,7 @@ River make_move(const Map& map) {
 
 json move(const json& request) {
   std::cerr << "move: " << request << std::endl;
-  Map map(request["state"]);
-  map.add_moves(request["move"]["moves"]);
+  Map map(request["state"], request["move"]["moves"]);
   json response;
   response["state"] = map.to_json();
   River r = make_move(map);

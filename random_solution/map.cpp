@@ -1,4 +1,5 @@
 #include "map.h"
+#include <algorithm>
 
 json read_json() {
   size_t length = 0;
@@ -26,6 +27,7 @@ Map::Map(const json& old_state) : json_state(old_state) {
   for (auto& site : json_state["map"]["sites"]) {
     sites.push_back(site["id"]);
   }
+  std::sort(sites.begin(), sites.end());
   for (auto& river : json_state["map"]["rivers"]) {
     rivers.push_back(make_river(river));
   }
@@ -43,6 +45,35 @@ Map::Map(const json& old_state) : json_state(old_state) {
       " claims: " << claims.size() <<
       " moves: " << moves.size() <<
       std::endl;
+  build_graph();
+}
+
+Map::Map(const json& old_state, const json& moves) : Map(old_state) {
+  add_moves(moves);
+  clear_graph();
+  build_graph();
+}
+
+size_t Map::vertex_id(int32_t size) {
+  return std::lower_bound(sites.begin(), sites.end(), size) - sites.begin();
+}
+
+void Map::clear_graph() {
+  graph.clear();
+  is_mine.clear();
+}
+
+void Map::build_graph() {
+  graph.resize(sites.size());
+  for (size_t i = 0; i < rivers.size(); ++i) {
+    size_t u = vertex_id(rivers[i].first);
+    size_t v = vertex_id(rivers[i].second);
+    graph[u].emplace_back(u, v, kNoOwner, i);
+  }
+  is_mine.assign(sites.size(), false);
+  for (auto site : mines) {
+    is_mine[vertex_id(site)] = true;
+  }
 }
 
 void Map::add_claim(const json& claim) {
