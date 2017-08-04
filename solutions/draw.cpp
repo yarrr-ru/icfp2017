@@ -48,10 +48,10 @@ void Drawer::update_bounds(Point p) {
   maxy = std::max(maxy, p.y);
 }
 
-void Drawer::line(Point a, Point b, std::string color) {
+void Drawer::line(Point a, Point b, std::string color, size_t stroke_width) {
   update_bounds(a);
   update_bounds(b);
-  lines.emplace_back(a, b, color);
+  lines.emplace_back(a, b, color, stroke_width);
 }
 
 void Drawer::point(Point c, std::string color) {
@@ -79,7 +79,7 @@ void Drawer::close() {
     Point a = transform(line.a);
     Point b = transform(line.b);
     file << "<line x1='" << a.x << "' y1='" << a.y << "' x2='" << b.x << "' y2='" << b.y << 
-      "' stroke='" << line.color << "'/>\n";
+      "' stroke='" << line.color << "' stroke-width='" << line.stroke_width << "'/>\n";
   }
   for (auto circle : circles) {
     Point c = transform(circle.c);

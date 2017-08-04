@@ -14,22 +14,24 @@ struct Point {
 struct Line {
   Point a, b;
   std::string color;
+  size_t stroke_width;
 
-  Line(Point a, Point b, std::string color): a(a), b(b), color(color) {}
+  Line(Point a, Point b, std::string color, size_t stroke_width):
+      a(a), b(b), color(std::move(color)), stroke_width(stroke_width) {}
 };
 
 struct Circle {
   Point c;
   std::string color;
 
-  Circle(Point c, std::string color): c(c), color(color) {}
+  Circle(Point c, std::string color): c(c), color(std::move(color)) {}
 };
 
 struct Text {
   Point pos;
   std::string text;
 
-  Text(Point pos, std::string text): pos(pos), text(text) {}
+  Text(Point pos, std::string text): pos(pos), text(std::move(text)) {}
 };
 
 class Drawer {
@@ -37,7 +39,7 @@ public:
   Drawer() {}
   Drawer(const std::string &path);
 
-  void line(Point a, Point b, std::string color);
+  void line(Point a, Point b, std::string color, size_t stroke_width);
   void point(Point c, std::string color);
   void text(Point pos, std::string text);
   void close();

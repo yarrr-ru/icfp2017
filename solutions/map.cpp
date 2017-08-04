@@ -38,9 +38,9 @@ Map::Map(const json& old_state) :
 }
 
 Map::Map(const json& old_state, const json& moves) : Map(old_state) {
-  add_moves(moves);
+  const auto claimed_rivers = add_moves(moves);
   build_graph();
-  draw_graph();
+  draw_graph(claimed_rivers);
   fill_distances();
   std::cerr << "map punter: " << punter <<
       " punters: " << punters <<
@@ -84,8 +84,13 @@ int64_t Map::get_score_by_river_owners(const std::vector<Punter>& river_owners, 
   return score;
 }
 
-void Map::draw_graph() {
-  system("mkdir svg");
+void Map::draw_graph(const std::vector<std::pair<size_t, size_t>>& claimed_rivers) {
+  auto return_code = system("mkdir svg -p");
+  if (return_code != 0) {
+    std::cerr << "unable to mkdir svg, return code: " << return_code;
+    return;
+  }
+
   std::string dir = std::string("svg/") + std::to_string(punter);
   Drawer drawer(dir);
   for (size_t i = 0; i < sites.size(); ++i) {
@@ -104,8 +109,11 @@ void Map::draw_graph() {
       } else if (edge.owner != kNoOwner) {
         color = "red";
       }
-      drawer.line(coordinates[edge.from], 
-          coordinates[edge.to], color);
+
+      const size_t width = std::binary_search(
+          claimed_rivers.begin(), claimed_rivers.end(), std::make_pair(edge.to, edge.from)) ? 5 : 1;
+
+      drawer.line(coordinates[edge.from], coordinates[edge.to], color, width);
     }
   }
   drawer.close();
@@ -175,14 +183,26 @@ void Map::add_claim(const json& claim) {
   assert(added);
 }
 
-void Map::add_moves(const json& new_moves) {
+std::vector<std::pair<size_t, size_t>> Map::add_moves(const json& new_moves) {
+  std::vector<std::pair<size_t, size_t>> claimed_rivers;
+  claimed_rivers.reserve(new_moves.size());
   for (auto& move: new_moves) {
     if (move.count("claim")) {
-      add_claim(move["claim"]);
+      const auto& claim = move["claim"];
+      add_claim(claim);
+
+      River river = make_river(claim);
+      std::pair<size_t, size_t> our_river(vertex_id(river.first), vertex_id(river.second));
+      if (our_river.first > our_river.second) {
+        std::swap(our_river.first, our_river.second);
+      }
+      claimed_rivers.emplace_back(our_river);
     } else {
       assert(move.count("pass"));
     }
     moves.push_back(move);
   }
+  std::sort(claimed_rivers.begin(), claimed_rivers.end());
+  return claimed_rivers;
 }
 
