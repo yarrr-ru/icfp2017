@@ -1,4 +1,5 @@
 #include "launcher.h"
+#include "bruteforce.h"
 #include <algorithm>
 
 River make_move_random(const Map& map) {
@@ -37,5 +38,5 @@ River make_move_random(const Map& map) {
 }
 
 int main() {
-  return main_launcher(make_move_random);
+  return main_launcher(make_bruteforce_move);
 }

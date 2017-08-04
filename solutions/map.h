@@ -14,6 +14,7 @@ using River = std::pair<int32_t, int32_t>;
 using Punter = int32_t;
 using Site = int32_t;
 using Vertex = size_t;
+using Score = int64_t;
 
 static constexpr Punter kNoOwner = -1;
 
