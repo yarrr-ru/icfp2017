@@ -68,7 +68,11 @@ void Map::build_graph() {
   for (size_t i = 0; i < rivers.size(); ++i) {
     size_t u = vertex_id(rivers[i].first);
     size_t v = vertex_id(rivers[i].second);
-    graph[u].emplace_back(u, v, kNoOwner, i);
+    auto iterator = claims.find({u, v});
+    Punter owner = (iterator != claims.end()) ? iterator->second : kNoOwner;
+    graph[u].emplace_back(u, v, owner, i);
+    graph[v].emplace_back(v, u, owner, i);
+    std::cerr << "add edge: " << u << " " << v << " owner: " << owner << std::endl;
   }
   is_lambda.assign(sites.size(), false);
   for (auto site : mines) {
