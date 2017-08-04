@@ -16,6 +16,7 @@ def json_to_bytearray(json_data):
 
 
 def send_json(sock, json_data):
+  print('sending json to server:', json_data)
   data_to_send = json_to_bytearray(json_data)
   data_sent = sock.send(data_to_send)
   assert data_sent == len(data_to_send)
@@ -89,6 +90,7 @@ def main():
 
   sock = socket.socket()
   sock.connect((SERVER, int(args.port)))
+  sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
   online_handshake(sock, args.name)
 
@@ -109,7 +111,7 @@ def main():
   while True:
     moves_json = receive_json(sock)
     moves_json["state"] = state
-    print('received moves', file=sys.stderr)
+    print('received moves:', moves_json, file=sys.stderr)
     new_move_stdout, new_move_stderr = run_subprocess(args.binary).communicate(json_to_bytearray(moves_json))
     print('strategy stderr:\n' + new_move_stdout.decode('utf-8'), file=sys.stderr)
     if "stop" in moves_json:
