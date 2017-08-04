@@ -85,10 +85,10 @@ public:
     return rivers.size();
   }
 
-  void draw_graph();
+  void draw_graph(const std::vector<std::pair<size_t, size_t>>& claimed_rivers);
 
 private:
-  void add_moves(const json& new_moves);
+  std::vector<std::pair<size_t, size_t>> add_moves(const json& new_moves);
 
   void add_claim(const json& claim);
 
