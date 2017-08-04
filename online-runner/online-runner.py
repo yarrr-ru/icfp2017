@@ -130,7 +130,7 @@ class OnlineRunner:
     if self.index == 0:
       PROGRESS_BAR = progressbar.ProgressBar(max_value=total_move_loops)
     while True:
-      if self.index == 0:
+      if self.index == 0 and move_loop_count <= total_move_loops:
         PROGRESS_BAR.update(move_loop_count)
       moves_json = self.receive_json()
       moves_json["state"] = state
@@ -140,6 +140,7 @@ class OnlineRunner:
         STOP_JSONS.append(moves_json)
         break
       state = new_move_json.pop("state")
+
       self.send_json(new_move_json)
       move_loop_count += 1
 
