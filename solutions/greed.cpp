@@ -38,7 +38,7 @@ std::pair<int64_t, std::vector<Edge>> get_path(Vertex from, Vertex to, const Map
     }
   }
   auto d = dist[to];
-  if (d == -1) {
+  if (d == 1e9) {
     return {-1, path};
   }
 
