@@ -34,7 +34,7 @@ class OnlineRunner:
 
 
   def send_json(self, json_data):
-    print('sending json to server:', json_data, file=self.protocol_log_file)
+    print('sending json to server:', json.dumps(json_data), file=self.protocol_log_file)
     data_to_send = json_to_bytearray(json_data)
     data_sent = self.sock.send(data_to_send)
     assert data_sent == len(data_to_send)
@@ -64,7 +64,7 @@ class OnlineRunner:
         self.data_queue = self.data_queue[need_length:]
 
     json_data = json.loads(data.decode("utf-8"))
-    print('received json from server:', json_data, file=self.protocol_log_file)
+    print('received json from server:', json.dumps(json_data), file=self.protocol_log_file)
     return json_data
 
   def receive_json_from_strategy(self, stdout_data):
@@ -81,14 +81,14 @@ class OnlineRunner:
         expected_length = 10 * expected_length + b - ord('0')
     data = stdout_data[prefix_length:expected_length+prefix_length]
     json_data = json.loads(data.decode("utf-8"))
-    print('received json from strategy:', json_data, file=self.protocol_log_file)
+    print('received json from strategy:', json.dumps(json_data), file=self.protocol_log_file)
     return json_data
 
   def run_strategy(self, json_data, timeout_seconds):
     start_time = time.time()
     proc = subprocess.Popen([self.binary],
         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    print('sending json to strategy:', json_data, file=self.protocol_log_file)
+    print('sending json to strategy:', json.dumps(json_data), file=self.protocol_log_file)
     stdout, stderr = proc.communicate(json_to_bytearray(json_data))
     end_time = time.time()
     if end_time - start_time > timeout_seconds / 2:
@@ -129,6 +129,7 @@ class OnlineRunner:
     total_move_loops = self.total_rivers // self.total_players
     if self.index == 0:
       PROGRESS_BAR = progressbar.ProgressBar(max_value=total_move_loops)
+      PROGRESS_BAR.update(0)
     while True:
       if self.index == 0 and move_loop_count <= total_move_loops:
         PROGRESS_BAR.update(move_loop_count)
@@ -139,6 +140,10 @@ class OnlineRunner:
         OUR_IDS[self.our_id] = self.index
         STOP_JSONS.append(moves_json)
         break
+      if move_loop_count > 0:
+        for move in moves_json["move"]["moves"]:
+          if "pass" in move and move["pass"]["punter"] == self.our_id:
+            print(self.log_name + ": passed on turn", move_loop_count - 1)
       state = new_move_json.pop("state")
 
       self.send_json(new_move_json)
