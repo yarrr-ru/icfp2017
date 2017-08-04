@@ -1,9 +1,14 @@
 #include "launcher.h"
 #include <algorithm>
 #include <vector>
+#include <deque>
 
 #define all(v) (v).begin(), (v).end()
 #define forn(i, n) for (int i = 0; i < (int)(n); ++i)
+#define eb emplace_back
+#define pb push_back
+#define fi first
+#define se second
 
 using namespace std;
 
@@ -151,15 +156,15 @@ River make_move_flow(const Map& map) {
       if (e.from >= e.to) continue;
       int c;
       if (e.owner == map.punter) {
-        bf.add_edge(e.from, e.to, 0);
+        bfs.add_edge(e.from, e.to, 0);
         c = inf_flow;
       } else if (e.owner == kNoOwner) {
-        bf.add_edge(e.from, e.to, 1);
+        bfs.add_edge(e.from, e.to, 1);
         c = 1;
       } else {
         c = 0;
       }
-      // cerr << "add_edge " << e.from << ' ' << e.to << ' ' << c << '\n';\
+      // cerr << "add_edge " << e.from << ' ' << e.to << ' ' << c << '\n';
       mf.add_edge(e.from, e.to, c);
     }
   }
@@ -172,25 +177,24 @@ River make_move_flow(const Map& map) {
   //   vi d = bfs.get(v);
   // }
 
-  vector<tuple<int, int, pii>> bf;
+  vector<tuple<int, int, pii>> best_connection;
   forn(i, k) forn(j, i) {
     mf.clear();
     int v = map.lambda_vertices[i];
     int u = map.lambda_vertices[j];
     int f = lf[i][j] = lf[j][i] = mf.go(v, u);
     if (f < inf_flow) {
-      bf.emplace(-f, bf[i][j], pii(v, u));
+      best_connection.emplace_back(-f, bf[i][j], pii(v, u));
     }
   }
   sort(all(bf));
-  for(auto& e: bf) {
-    cerr << "cand " << get<0>(e) << ' ' << get<1>(e) << ' '
-      << get<2>(e).fi << ' ' << get<2>(e).se << '\n';
+  for(auto& e: best_connection) {
+    cerr << "cand " << std::get<0>(e) << ' ' << std::get<1>(e) << ' ' << std::get<2>(e).fi << ' ' << std::get<2>(e).se << '\n';
   }
 
   if (!bf.empty()) {
-    int v = get<2>(bf[0]).fi;
-    int u = get<2>(bf[0]).se;
+    // int v = std::get<2>(bf[0]).fi;
+    // int u = std::get<2>(bf[0]).se;
   }
 
   auto river_owners = map.river_owners;
