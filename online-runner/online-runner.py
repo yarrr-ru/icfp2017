@@ -67,28 +67,32 @@ class OnlineRunner:
     return json_data
 
   def receive_json_from_strategy(self, stdout_data):
-    if len(stdout_data) == 0:
-      return None
-
-    expected_length = 0
-    prefix_length = 0
-    for b in stdout_data:
-      prefix_length += 1
-      if b == ord(':'):
+    json_data = None
+    for i in range(2):
+      if len(stdout_data) == 0:
         break
-      else:
-        expected_length = 10 * expected_length + b - ord('0')
-    data = stdout_data[prefix_length:expected_length+prefix_length]
-    json_data = json.loads(data.decode("utf-8"))
+      expected_length = 0
+      prefix_length = 0
+      for b in stdout_data:
+        prefix_length += 1
+        if b == ord(':'):
+          break
+        else:
+          expected_length = 10 * expected_length + b - ord('0')
+      data = stdout_data[prefix_length:expected_length+prefix_length]
+      json_data = json.loads(data.decode("utf-8"))
+      stdout_data = stdout_data[expected_length+prefix_length:]
     print('received json from strategy:', json.dumps(json_data), file=self.protocol_log_file)
     return json_data
 
   def run_strategy(self, json_data, timeout_seconds):
+    handshake_json = {"you": "aimtech"}
     start_time = time.time()
     proc = subprocess.Popen([self.binary],
         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     print('sending json to strategy:', json.dumps(json_data), file=self.protocol_log_file)
-    stdout, stderr = proc.communicate(json_to_bytearray(json_data))
+    data_to_send = json_to_bytearray(handshake_json) + json_to_bytearray(json_data)
+    stdout, stderr = proc.communicate(data_to_send)
     end_time = time.time()
     print(stderr.decode('utf-8'), file=self.strategy_log_file)
     if end_time - start_time > timeout_seconds / 2:

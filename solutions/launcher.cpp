@@ -1,4 +1,5 @@
 #include "launcher.h"
+#include <sstream>
 
 namespace {
 
@@ -8,8 +9,12 @@ json read_json() {
   std::cin >> length >> delim;
   assert(delim == ':' && length > 0);
   // std::cerr << "read_json length: " << length << std::endl;
+  std::vector<char> bytes(length);
+  std::cin.read(bytes.data(), length);
+  std::stringstream v;
+  v.write(bytes.data(), length);
   json result;
-  std::cin >> result;
+  v >> result;
   return result;
 }
 
@@ -65,9 +70,21 @@ void timeout(const json& request) {
   std::cerr << "timeout: " << request << std::endl;
 }
 
+bool handshake() {
+  json me;
+  me["me"] = "aimtech";
+  write_json(me);
+  json you = read_json();
+  return you["you"] == "aimtech";
+}
+
 }  // namespace
 
 int main_launcher(MakeMove make_move, MakeFutures make_futures) {
+  if (!handshake()) {
+    std::cerr << "bad handshake" << std::endl;
+    return 1;
+  }
   json request = read_json();
   if (request.count("punter")) {
     write_json(setup(make_futures, request));
