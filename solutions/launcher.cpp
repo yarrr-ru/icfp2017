@@ -63,8 +63,8 @@ json move(MakeMove make_move, const json& request) {
   return response;
 }
 
-void stop(const json&) {
-  std::cerr << "stop: " << std::endl;
+void stop(const json& request) {
+  std::cerr << "stop: " << request << std::endl;
 }
 
 void timeout(const json& request) {
