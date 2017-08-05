@@ -38,8 +38,10 @@ River make_move_maximizing_cut(const Map& map) {
     }
   }
 
-  int32_t max_score = -1;
+  std::pair<int32_t, int64_t> max_score{-1, -1};
   River best_river;
+
+  auto river_owners = map.river_owners;
 
   for (size_t u = 0; u < map.graph.size(); ++u) {
     if (vertex_type[u] != REACHABLE) {
@@ -54,24 +56,27 @@ River make_move_maximizing_cut(const Map& map) {
         continue;
       }
       assert(vertex_type[v] == BORDER);
-      int32_t score = 0;
+      std::pair<int32_t, int64_t> score{0, 0};
       for (auto new_edge : map.graph[v]) {
         if (edge.owner != kNoOwner) {
           continue;
         }
         size_t w = new_edge.to;
         if (vertex_type[w] == UNREACHABLE) {
-          ++score;
+          ++score.first;
         }
       }
+      river_owners[edge.river_index] = map.punter;
+      score.second = map.get_score_by_river_owners(river_owners, map.punter);
+      river_owners[edge.river_index] = kNoOwner;
       if (score > max_score) {
         max_score = score;
         best_river = map.get_river(edge);
       }
     }
   }
-  std::cerr << "best score " << max_score << std::endl;
-  if (max_score <= 1) {
+  std::cerr << "best score " << max_score.first << ' ' << max_score.second << std::endl;
+  if (max_score.first < 0) {
     return make_move_greed_st(map);
   }
 
