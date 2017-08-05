@@ -134,21 +134,22 @@ def main():
 
   threads = []
   while True:
-      print("total games played: {}, avg points: {:.3f}, avg score: {:.3f}".format(len(all_points), avg(all_points), avg(all_scores)))
+      print("strategy: {}, total games played: {}, avg points: {:.3f}, avg score: {:.3f}".format(
+          args.strategy, len(all_points), avg(all_points), avg(all_scores)))
       new_threads = []
       for thread in threads:
         if thread.is_alive():
           new_threads.append(thread)
       threads = new_threads
       if len(threads) == args.threads:
-        time.sleep(1)
+        time.sleep(10)
         continue
 
       servers = parse_server_list()
       free_servers = sorted(filter(ServerFilter(args.map), servers))
       if len(free_servers) == 0:
         print("no free servers found for map:", args.map, file=sys.stderr)
-        time.sleep(1)
+        time.sleep(10)
         continue
 
       random.shuffle(free_servers)
