@@ -139,7 +139,7 @@ River make_move_wise(const Map& map) {
 }
 
 River make_move_wise_st(const Map& map) {
-  River r = make_move_surround_all_lamdas(map);
+  River r = make_move_scored_only_st(map);
   if (r != River{0, 0}) {
     return r;
   }
