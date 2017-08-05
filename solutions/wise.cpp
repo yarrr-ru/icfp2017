@@ -1,5 +1,6 @@
 #include "greed.h"
 #include "wise.h"
+#include "pidor.h"
 #include <algorithm>
 #include <queue>
 #include <cassert>
@@ -105,7 +106,8 @@ River make_move_wise(const Map& map) {
     old_distances.push_back(distances);
   }
 
-  double best_score = 0;
+  constexpr double kEps = 1e-9;
+  double best_score = kEps;
   River best_river = {0, 0};
 
   for (size_t river_id = 0; river_id < river_owners.size(); river_id++) {
@@ -137,7 +139,7 @@ River make_move_wise(const Map& map) {
 }
 
 River make_move_wise_st(const Map& map) {
-  River r = make_move_greed_only_st(map);
+  River r = make_move_surround_all_lamdas(map);
   if (r != River{0, 0}) {
     return r;
   }
@@ -145,6 +147,6 @@ River make_move_wise_st(const Map& map) {
   if (r != River{0, 0}) {
     return r;
   }
-  return make_move_greed(map);
+  return make_move_as_an_endspiel_pidor(map);
 }
 
