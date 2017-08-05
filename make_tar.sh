@@ -9,3 +9,4 @@ tar -czf $TAR_NAME *
 mv $TAR_NAME ../
 cd -
 rm -rf package
+md5 $TAR_NAME
