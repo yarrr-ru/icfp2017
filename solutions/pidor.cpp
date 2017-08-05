@@ -42,9 +42,6 @@ River make_move_as_a_pidor(const Map& map) {
   std::reverse(players.begin(), players.end());
   for (auto pair : players) {
     Punter player = pair.second;
-    if (player == map.punter) {
-      continue;
-    }
     Dsu dsu(map.graph.size());
     for (size_t u = 0; u < map.graph.size(); ++u) {
       for (auto edge : map.graph[u]) {
@@ -72,11 +69,8 @@ River make_move_as_a_pidor(const Map& map) {
         if (!useful_component[comp1] || !useful_component[comp2]) {
           continue;
         }
-        if (comp1 == comp2) {
+        if (comp1 >= comp2) {
           continue;
-        }
-        if (comp1 > comp2) {
-          std::swap(comp1, comp2);
         }
         connect_ways[std::make_pair(comp1, comp2)].push_back(edge);
       }
