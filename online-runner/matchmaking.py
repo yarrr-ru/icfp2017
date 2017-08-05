@@ -60,7 +60,7 @@ SLOTS_BY_PORT = {
 
 SCRIPT_NAME = "online-runner.py"
 
-FUNNY_NAMES = ["puntercalc3000", "test_punter_please_ignore", "GoGoPunterRanges", "Artem Pidr"]
+FUNNY_NAMES = ["puntercalc3000", "test_punter_please_ignore", "GoGoPunterRanges"]
 
 all_points_by_strategy = {}
 last_run_score_by_strategy = {}
