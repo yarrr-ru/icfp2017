@@ -111,7 +111,7 @@ River make_move_as_a_pidor(const Map& map) {
   if (r.first != r.second) {
     return r;
   }
-  return make_move_greed_st(map);
+  return make_move_as_an_endspiel_pidor(map);
 }
 
 River make_move_surround_pidor_endspiel(const Map& map) {
