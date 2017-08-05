@@ -341,8 +341,11 @@ Futures make_futures_shortest_path(const Map& map) {
   if (shortest_pair == 1e9) {
     return futures;
   }
-  futures.push_back(map.get_server_future(best_u, best_v));
-  futures.push_back(map.get_server_future(best_v, best_u));
+  auto path = get_path(best_u, best_v, map, map.river_owners).second;
+  size_t vx = path[0].from;
+  size_t ux = path.back().to;
+  futures.push_back(map.get_server_future(best_u, vx));
+  futures.push_back(map.get_server_future(best_v, ux));
   return futures;
 }
 
