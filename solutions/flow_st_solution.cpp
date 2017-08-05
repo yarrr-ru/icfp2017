@@ -1,4 +1,5 @@
 #include "launcher.h"
+#include "greed.h"
 #include <algorithm>
 #include <vector>
 #include <deque>
@@ -122,8 +123,8 @@ struct Bfs {
     g[u].eb(v, c);
   }
 
-  vi get(int v) {
-    vi d(n, n);
+  std::pair<vi, vi> get(int v) {
+    vi d(n, n), p(n, -1);
     d[v] = 0;
     deque<int> q;
     q.push_back(v);
@@ -132,14 +133,15 @@ struct Bfs {
       for (auto& e: g[v]) {
         int u = e.fi;
         int w = d[v] + e.se;
-        if (d[u] > d[v] + w) {
-          d[u] = d[v] + w;
+        if (d[u] > w) {
+          d[u] = w;
+          p[u] = v;
           if (w) q.push_back(u);
           else q.push_front(u);
         }
       }
     }
-    return d;
+    return {d, p};
   }
 
   vvpi g;
@@ -164,59 +166,94 @@ River make_move_flow(const Map& map) {
       } else {
         c = 0;
       }
-      // cerr << "add_edge " << e.from << ' ' << e.to << ' ' << c << '\n';
-      mf.add_edge(e.from, e.to, c);
+      if (c > 0) {
+        // cerr << "add_edge " << e.from << ' ' << e.to << ' ' << c << '\n';
+        mf.add_edge(e.from, e.to, c);
+      }
     }
   }
   int k = map.lambda_vertices.size();
+  vi lambda_max_score(k, 0);
+  vi lambda_flow_score(k, 0);
   vvi lf(k, vi(k, 0));
   vvi bf(k, vi(k, 0));
+  vvi bf_all(k, vi(n, 0));
 
-  // forn(i, k) {
-  //   int v = map.lambda_vertices[i];
-  //   vi d = bfs.get(v);
-  // }
+  forn(i, k) {
+    int v = map.lambda_vertices[i];
+    lambda_max_score[i] = map.get_lambda_max_score(v);
+    auto dp = bfs.get(v);
+    bf_all[i] = dp.fi;
+    forn(j, k) {
+      int u = map.lambda_vertices[j];
+      bf[i][j] = dp.fi[u];
+      // cerr << "bf " << v << ' ' << u << ' ' << i << ' ' << j << ' ' << bf[i][j] << '\n';
+    }
+  }
 
-  vector<tuple<int, int, pii>> best_connection;
+  vector<tuple<int, int, int, int, pii>> best_connection;
   forn(i, k) forn(j, i) {
-    mf.clear();
     int v = map.lambda_vertices[i];
     int u = map.lambda_vertices[j];
+    mf.clear();
     int f = lf[i][j] = lf[j][i] = mf.go(v, u);
-    if (f < inf_flow) {
-      best_connection.emplace_back(-f, bf[i][j], pii(v, u));
+    lambda_flow_score[i] += f;
+    lambda_flow_score[j] += f;
+    if (0 < f && f < inf_flow) {
+      best_connection.emplace_back(-f, bf[i][j], 
+          -lambda_flow_score[i]-lambda_flow_score[j],
+          -lambda_max_score[i]-lambda_max_score[j], pii(v, u));
     }
   }
-  sort(all(bf));
+  sort(all(best_connection));
   for(auto& e: best_connection) {
-    cerr << "cand " << std::get<0>(e) << ' ' << std::get<1>(e) << ' ' << std::get<2>(e).fi << ' ' << std::get<2>(e).se << '\n';
+    cerr << "cand " << std::get<0>(e) << 
+      ' ' << std::get<1>(e) << 
+      ' ' << std::get<2>(e) << 
+      ' ' << std::get<3>(e) << 
+      ' ' << std::get<4>(e).fi << 
+      ' ' << std::get<4>(e).se << '\n';
   }
 
-  if (!bf.empty()) {
-    // int v = std::get<2>(bf[0]).fi;
-    // int u = std::get<2>(bf[0]).se;
-  }
-
-  auto river_owners = map.river_owners;
-
-  int64_t max_score = -1;
-  River best_river;
-
-  for (size_t river_index = 0; river_index < river_owners.size(); ++river_index) {
-    if (river_owners[river_index] != kNoOwner) {
-      continue;
+  if (count(all(map.river_owners), map.punter) >= 1) {
+    ;
+  } else if (!best_connection.empty()) {
+    int v = std::get<4>(best_connection[0]).fi;
+    int u = std::get<4>(best_connection[0]).se;
+    int d = std::get<1>(best_connection[0]);
+    auto e = get_worst_edge(v, u, map);
+    if (e.from == 0 && e.to == 0) {
+      cerr << "omg\n";
+    } else {
+      cerr << "use worst_edge " << v << " " << u << " edge: " << e.from << ' ' << e.to << '\n';
+      forn(i, k) {
+        if (bf_all[i][v] + bf_all[i][u] == d) {
+          cerr << "use lambda " << i << " " << map.lambda_vertices[i] << '\n';
+          Edge best_z{};
+          for(auto& e: map.graph[map.lambda_vertices[i]]) {
+            if (e.owner != kNoOwner)
+              continue;
+            int z = e.to;
+            auto dp = bfs.get(z);
+            int dd = dp.fi[v] + dp.fi[u];
+            cerr << "cand " << z << " dd: " << dd << " d: " << d << '\n';
+            best_z = e;
+          }
+          if (best_z.from == 0 && best_z.to == 0) {
+            cerr << "omg best_z\n";
+          } else {
+            return map.get_river(best_z);
+          }
+        }
+      }
+      return map.get_river(e);
     }
-
-    river_owners[river_index] = map.punter;
-    auto score = map.get_score_by_river_owners(river_owners, map.punter);
-    river_owners[river_index] = kNoOwner;
-    if (score > max_score) {
-      max_score = score;
-      best_river = map.get_river(river_index);
-    }
   }
-  assert(max_score >= 0);
-  return best_river;
+  River r = make_move_greed_only_st(map);
+  if (r.first != r.second) {
+    return r;
+  }
+  return make_move_greed(map);
 }
 
 int main() {
