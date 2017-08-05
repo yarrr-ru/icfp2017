@@ -7,7 +7,7 @@ using Paths = std::vector<std::tuple<int64_t, Vertex, Vertex, Path>>;
 
 std::pair<int64_t, Path> get_path(Vertex from, Vertex to, const Map& map, const std::vector<Punter>& river_owners) {
   Path path;
-  if (map.get_distance_from_lambda(from, to) < 0) {
+  if (map.is_lambda[from] && map.get_distance_from_lambda(from, to) < 0) {
     return {-1, path};
   }
 

@@ -4,7 +4,7 @@ file(GLOB HEADERS *.h)
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++14 -Wall -Werror -Wextra -Wunused-parameter -O2 -g")
-add_library(common map.cpp launcher.cpp draw.cpp greed.cpp pidor.cpp ${HEADERS})
+add_library(common map.cpp launcher.cpp draw.cpp greed.cpp pidor.cpp bridges_burner.cpp ${HEADERS})
 
 macro(add_solution name) 
   add_executable(${name}_solution ${name}_solution.cpp ${HEADERS})
@@ -18,3 +18,4 @@ add_solution(greed_st)
 add_solution(maximize_cut)
 add_solution(greed_surround_st)
 add_solution(pidor)
+add_solution(bridges_burner)
