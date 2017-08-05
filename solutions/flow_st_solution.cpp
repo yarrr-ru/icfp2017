@@ -13,6 +13,14 @@
 
 using namespace std;
 
+// PARAMS!
+
+const int move_number_threshold = 10;
+const int flow_coef = 1;
+const int dist_coef = 2;
+
+// END PARAMS!
+
 typedef pair<int, int> pii;
 typedef vector<pii> vpi;
 typedef vector<vpi> vvpi;
@@ -148,6 +156,11 @@ struct Bfs {
 };
 
 River make_move_flow(const Map& map) {
+  int move_number = count(all(map.river_owners), map.punter);
+  cerr << "move number: " << move_number << '\n';
+  forn(p, map.punters) {
+    cerr << "score p: " << map.get_score_by_river_owners(map.river_owners, p) << '\n';
+  }
   int n = map.graph.size();
   int inf_flow = 10000;
   MaxFlow mf(n);
@@ -199,8 +212,9 @@ River make_move_flow(const Map& map) {
     int f = lf[i][j] = lf[j][i] = mf.go(v, u);
     lambda_flow_score[i] += f;
     lambda_flow_score[j] += f;
+    int d = bf[i][j];
     if (0 < f && f < inf_flow) {
-      best_connection.emplace_back(-f, bf[i][j], 
+      best_connection.emplace_back(-f * flow_coef + d * dist_coef, d, 
           -lambda_flow_score[i]-lambda_flow_score[j],
           -lambda_max_score[i]-lambda_max_score[j], pii(v, u));
     }
@@ -215,7 +229,7 @@ River make_move_flow(const Map& map) {
       ' ' << std::get<4>(e).se << '\n';
   }
 
-  if (count(all(map.river_owners), map.punter) >= 1) {
+  if (move_number >= move_number_threshold) {
     ;
   } else if (!best_connection.empty()) {
     int v = std::get<4>(best_connection[0]).fi;
