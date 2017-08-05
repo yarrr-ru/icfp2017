@@ -39,7 +39,7 @@ River make_move_as_an_endspiel_pidor(const Map& map) {
     if (moves.size() > 1) {
       score -= moves[1].first;
     }
-    score *= std::max(2.0, score / std::abs(our_score - pair.first));
+    score *= std::min(2.0, static_cast<double>(moves.front().first) / (1 + std::abs(our_score - pair.first)));
     river_scores[moves.front().second] += score;
   }
 
