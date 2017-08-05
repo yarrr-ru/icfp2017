@@ -1,4 +1,5 @@
 #include "greed.h"
+#include "maximize_cut.h"
 #include <algorithm>
 #include <queue>
 #include <cassert>
@@ -242,6 +243,14 @@ River make_move_greed(const Map& map) {
   }
   assert(max_score >= 0);
   return best_river;
+}
+
+River make_move_greed_st_maxcut(const Map& map) {
+  River r = make_move_greed_only_st(map);
+  if (r.first != r.second) {
+    return r;
+  }
+  return make_move_maximizing_cut(map);
 }
 
 River make_move_greed_st(const Map& map) {
