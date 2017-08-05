@@ -187,7 +187,7 @@ def main():
   scores = [] 
   for score in scores_json:
     punter_id = score["punter"]
-    punter_name = "unknown player"
+    punter_name = "unknown_player.{}".format(punter_id)
     if punter_id in OUR_IDS:
       index = OUR_IDS[punter_id]
       punter_name = args.binaries[index] + "." + str(punter_id)
