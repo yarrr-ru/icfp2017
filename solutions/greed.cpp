@@ -186,26 +186,37 @@ River make_move_scored_only_st(const Map& map) {
 
   std::map<River, double> river_scores;
 
-  auto u = std::get<1>(paths.front());
-  auto v = std::get<2>(paths.front());
   for (auto& p : paths) {
+    auto u = std::get<1>(p);
+    auto v = std::get<2>(p);
     auto path = std::get<3>(p);
     for (auto& e_to_remove : path) {
       river_owners[e_to_remove.river_index] = map.punters;
       auto new_dist = get_path(u, v, map, river_owners).first;
+      river_owners[e_to_remove.river_index] = kNoOwner;
       if (new_dist == -1) {
         new_dist = (path.size() * path.size() + river_owners.size()) / 2;
       }
+
       r = map.get_river(e_to_remove);
-      double score = static_cast<double>(new_dist) / path.size();
+      double score = static_cast<double>(new_dist);
       if (map.has_adjactent_owner(e_to_remove.from, map.punter)) {
-        score *= 2;
+        score++;
       }
       if (map.has_adjactent_owner(e_to_remove.to, map.punter)) {
-        score *= 2;
+        score++;
       }
+      score /= path.size();
       river_scores[r] += score;
-      river_owners[e_to_remove.river_index] = kNoOwner;
+    }
+  }
+
+  r = {0, 0};
+  double max_score = 0;
+  for (auto& p : river_scores) {
+    if (p.second > max_score) {
+      max_score = p.second;
+      r = p.first;
     }
   }
   return r;

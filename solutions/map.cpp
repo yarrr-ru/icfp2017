@@ -112,9 +112,9 @@ void Map::draw_graph(const std::vector<std::pair<size_t, size_t>>& claimed_river
   Drawer drawer(dir);
   for (size_t i = 0; i < sites.size(); ++i) {
     if (is_lambda[i]) {
-      drawer.point(coordinates[i], "red");
-    } else {
       drawer.point(coordinates[i], "blue");
+    } else {
+      drawer.point(coordinates[i], "lightgray");
     }
     for (auto edge : graph[i]) {
       if (edge.to > edge.from) {
@@ -122,9 +122,9 @@ void Map::draw_graph(const std::vector<std::pair<size_t, size_t>>& claimed_river
       }
       std::string color = "lightgray";
       if (edge.owner == punter) {
-        color = "black";
-      } else if (edge.owner != kNoOwner) {
         color = "red";
+      } else if (edge.owner != kNoOwner) {
+        color = "black";
       }
 
       const size_t width = std::binary_search(
