@@ -159,15 +159,12 @@ River make_move_wise_pidor(const Map& map) {
   if (r != River{0, 0}) {
     return r;
   }
-  r = make_move_as_a_pidor_only(map);
-  if (r != River{0, 0}) {
-    return r;
-  }
   r = make_move_wise(map);
   if (r != River{0, 0}) {
     return r;
   }
   return make_move_as_an_endspiel_pidor(map);
 }
+
 
 
