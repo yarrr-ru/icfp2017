@@ -306,7 +306,7 @@ Futures make_futures_random(const Map& map) {
     if (map.is_lambda[u]) {
       for (Vertex v = 0; v < n; v++) {
         if (!map.is_lambda[v]) {
-          futures.push_back(map.get_future(u, v));
+          futures.push_back(map.get_server_future(u, v));
           break;
         }
       }
@@ -341,8 +341,8 @@ Futures make_futures_shortest_path(const Map& map) {
   if (shortest_pair == 1e9) {
     return futures;
   }
-  futures.push_back(map.get_future(best_u, best_v));
-  futures.push_back(map.get_future(best_v, best_u));
+  futures.push_back(map.get_server_future(best_u, best_v));
+  futures.push_back(map.get_server_future(best_v, best_u));
   return futures;
 }
 

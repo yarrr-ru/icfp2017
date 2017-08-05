@@ -50,6 +50,13 @@ Map::Map(const json& old_state) :
     futures_supported = false;
   }
 
+  futures.clear();
+  if (json_state.count("futures")) {
+    for (auto& future : json_state["futures"]) {
+      futures.push_back(Future{vertex_id(future["source"]), vertex_id(future["target"])});
+    }
+  }
+
   build_graph();
   fill_distances();
 }

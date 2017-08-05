@@ -45,6 +45,7 @@ public:
   std::vector<char> is_lambda;
   std::vector<Vertex> lambda_vertices;
   std::vector<Punter> river_owners;
+  std::vector<Future> futures;
   bool futures_supported;
 
   explicit Map(const json& old_state);
@@ -64,7 +65,7 @@ public:
     return rivers[river_index];
   }
 
-  Future get_future(Vertex source, Vertex target) const {
+  Future get_server_future(Vertex source, Vertex target) const {
     assert(is_lambda[source]);
     assert(!is_lambda[target]);
     return Future{sites[source], sites[target]};

@@ -42,6 +42,7 @@ json setup(MakeFutures make_futures, const json& request) {
         json_futures.push_back(json_future);
       }
       response["futures"] = json_futures;
+      response["state"]["futures"] = json_futures;
       std::cerr << "futures ready: " << json_futures.size() << std::endl;
     }
   }
