@@ -78,10 +78,11 @@ def run_match(server, strategies):
   scores = []
   was_updated = set()
   for line in lines:
-    score, name = line.split()
+    score_string, name = line.split()
+    score = int(score_string)
     name = name[:name.rfind('.')]
     points = len(strategies)
-    for prev_score, prev_name in scores:
+    for prev_name, prev_score in scores:
       if prev_score > score:
         points -= 1
     scores.append((name, score))
@@ -107,17 +108,15 @@ def match_map(server, map_type):
 
 
 def get_strategies_to_run(slots, strategies):
-  strategies_set = set()
-  for strategy in strategies:
-    strategies_set.add(strategy)
+  strategies_list = list(strategies)
+  random.shuffle(strategies_list)
 
   strategies_to_run = []
   multiplier = 1
   while len(strategies) * multiplier < slots or slots % multiplier != 0:
     multiplier += 1
   assert multiplier < slots
-  for _ in range(slots // multiplier):
-    strategies_to_run.extend([strategies_set.pop()]*multiplier) 
+  strategies_to_run.extend(strategies_list[0:slots // multiplier]*multiplier)
   return strategies_to_run
 
 
@@ -186,9 +185,9 @@ def main():
     scores = scores_by_strategy[strategy]
 
     total_points = sum(points)
-    average_score = sum(score) / len(score)
-    max_score = max(score)
-    min_score = min(score)
+    average_score = sum(scores) / len(scores)
+    max_score = max(scores)
+    min_score = min(scores)
     
     print(strategy, total_poins, average_score, min_score, max_score)
 
