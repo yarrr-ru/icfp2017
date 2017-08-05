@@ -321,7 +321,7 @@ Futures make_futures_shortest_path(const Map& map) {
     return futures;
   }
   size_t shortest_pair = 1e9;
-  size_t best_u, best_v;
+  size_t best_u = 0, best_v = 0;
   for (size_t u = 0; u < map.graph.size(); ++u) {
     if (!map.is_lambda[u]) {
       continue;
