@@ -2,6 +2,14 @@
 #include <algorithm>
 #include <queue>
 
+namespace {
+
+inline River make_river(const json& river) {
+  return {river["source"], river["target"]};
+}
+
+}
+
 Map::Map(const json& old_state) :
     punter(old_state["punter"]),
     punters(old_state["punters"]),
@@ -35,6 +43,15 @@ Map::Map(const json& old_state) :
   assert(mines.size() > 0);
   assert(sites.size() >= mines.size());
   assert(rivers.size() >= sites.size());
+
+  if (json_state.count("settings") && json_state["settings"].count("futures")) {
+    futures_supported = json_state["settings"]["futures"];
+  } else {
+    futures_supported = false;
+  }
+
+  build_graph();
+  fill_distances();
 }
 
 Map::Map(const json& old_state, const json& moves) : Map(old_state) {

@@ -19,13 +19,27 @@ void write_json(const json& result) {
   // std::cerr << "write_json length: " << s.length() << std::endl;
 }
 
-
-json setup(const json& request) {
+json setup(MakeFutures make_futures, const json& request) {
   // std::cerr << "setup: " << request << std::endl;
   Map map(request);
   json response;
   response["ready"] = map.punter;
   response["state"] = map.to_json();
+  if (make_futures && map.futures_supported) {
+    std::cerr << "try to get futures from strategy" << std::endl;
+    auto futures = make_futures(map);
+    if (!futures.empty()) {
+      std::vector<json> json_futures;
+      for (auto future : futures) {
+        json json_future;
+        json_future["source"] = future.first;
+        json_future["target"] = future.second;
+        json_futures.push_back(json_future);
+      }
+      response["futures"] = json_futures;
+      std::cerr << "futures ready: " << json_futures.size() << std::endl;
+    }
+  }
   // std::cerr << "setup: " << map.punter << std::endl;
   return response;
 }
@@ -53,10 +67,10 @@ void timeout(const json& request) {
 
 }  // namespace
 
-int main_launcher(MakeMove make_move) {
+int main_launcher(MakeMove make_move, MakeFutures make_futures) {
   json request = read_json();
   if (request.count("punter")) {
-    write_json(setup(request));
+    write_json(setup(make_futures, request));
   } else if (request.count("move")) {
     write_json(move(make_move, request));
   } else if (request.count("stop")) {

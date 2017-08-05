@@ -265,3 +265,19 @@ River make_move_greed_surround_st(const Map& map) {
   return make_move_greed_st(map);
 }
 
+Futures make_futures_random(const Map& map) {
+  Futures futures;
+  auto n = map.is_lambda.size();
+  for (Vertex u = 0; u < n; u++) {
+    if (map.is_lambda[u]) {
+      for (Vertex v = 0; v < n; v++) {
+        if (!map.is_lambda[v]) {
+          futures.push_back(map.get_future(u, v));
+          break;
+        }
+      }
+    }
+  }
+  return futures;
+}
+

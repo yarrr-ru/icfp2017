@@ -11,6 +11,8 @@
 using json = nlohmann::json;
 
 using River = std::pair<int32_t, int32_t>;
+using Future = std::pair<int32_t, int32_t>;
+using Futures = std::vector<Future>;
 using Punter = int32_t;
 using Site = int32_t;
 using Vertex = size_t;
@@ -32,11 +34,7 @@ struct Edge {
     owner(owner),
     river_index(river_index) {
   }
-};
-
-inline River make_river(const json& river) {
-  return {river["source"], river["target"]};
-}
+}; 
 
 class Map {
 public:
@@ -47,12 +45,14 @@ public:
   std::vector<char> is_lambda;
   std::vector<Vertex> lambda_vertices;
   std::vector<Punter> river_owners;
+  bool futures_supported;
 
   explicit Map(const json& old_state);
   Map(const json& old_state, const json& moves);
 
   json to_json() {
     json_state["moves"] = moves;
+
     return json_state;
   }
 
@@ -62,6 +62,12 @@ public:
 
   River get_river(size_t river_index) const {
     return rivers[river_index];
+  }
+
+  Future get_future(Vertex source, Vertex target) const {
+    assert(is_lambda[source]);
+    assert(!is_lambda[target]);
+    return Future{sites[source], sites[target]};
   }
 
   int64_t get_distance_from_lambda(Vertex lambda, Vertex target) const {

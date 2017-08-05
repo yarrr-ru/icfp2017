@@ -20,3 +20,4 @@ River make_move_greed_st(const Map& map);
 River make_move_scored_st(const Map& map);
 River make_move_greed_surround_st(const Map& map);
 River make_move_scored_surround_st(const Map& map);
+Futures make_futures_random(const Map& map);
