@@ -14,6 +14,9 @@ Edge get_worst_edge(Vertex from, Vertex to, const Map& map);
 
 River make_move_surround_all_lamdas(const Map& map);
 River make_move_greed_only_st(const Map& map);
+River make_move_scored_only_st(const Map& map);
 River make_move_greed(const Map& map);
 River make_move_greed_st(const Map& map);
+River make_move_scored_st(const Map& map);
 River make_move_greed_surround_st(const Map& map);
+River make_move_scored_surround_st(const Map& map);

@@ -87,6 +87,8 @@ public:
 
   void draw_graph(const std::vector<std::pair<size_t, size_t>>& claimed_rivers);
 
+  bool has_adjactent_owner(Vertex v, Punter owner) const;
+
 private:
   std::vector<std::pair<size_t, size_t>> add_moves(const json& new_moves);
 

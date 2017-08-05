@@ -172,6 +172,45 @@ River make_move_greed_only_st(const Map& map) {
   return r;
 }
 
+River make_move_scored_only_st(const Map& map) {
+  auto paths = make_paths_between_lambdas(map);
+  auto river_owners = map.river_owners;
+  if (paths.empty()) {
+    return {0,0};
+  }
+
+  River r = make_move_surround_lamdas_with_paths(map, paths);
+  if (r.first != r.second) {
+    return r;
+  }
+
+  std::map<River, double> river_scores;
+
+  auto u = std::get<1>(paths.front());
+  auto v = std::get<2>(paths.front());
+  for (auto& p : paths) {
+    auto path = std::get<3>(p);
+    for (auto& e_to_remove : path) {
+      river_owners[e_to_remove.river_index] = map.punters;
+      auto new_dist = get_path(u, v, map, river_owners).first;
+      if (new_dist == -1) {
+        new_dist = (path.size() * path.size() + river_owners.size()) / 2;
+      }
+      r = map.get_river(e_to_remove);
+      double score = static_cast<double>(new_dist) / path.size();
+      if (map.has_adjactent_owner(e_to_remove.from, map.punter)) {
+        score *= 2;
+      }
+      if (map.has_adjactent_owner(e_to_remove.to, map.punter)) {
+        score *= 2;
+      }
+      river_scores[r] += score;
+      river_owners[e_to_remove.river_index] = kNoOwner;
+    }
+  }
+  return r;
+}
+
 River make_move_greed(const Map& map) {
   auto river_owners = map.river_owners;
 
@@ -200,6 +239,22 @@ River make_move_greed_st(const Map& map) {
     return r;
   }
   return make_move_greed(map);
+}
+
+River make_move_scored_st(const Map& map) {
+  River r = make_move_scored_only_st(map);
+  if (r.first != r.second) {
+    return r;
+  }
+  return make_move_greed(map);
+}
+
+River make_move_scored_surround_st(const Map& map) {
+  River r = make_move_surround_all_lamdas(map);
+  if (r.first != r.second) {
+    return r;
+  }
+  return make_move_scored_st(map);
 }
 
 River make_move_greed_surround_st(const Map& map) {

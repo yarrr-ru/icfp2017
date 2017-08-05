@@ -119,6 +119,15 @@ void Map::draw_graph(const std::vector<std::pair<size_t, size_t>>& claimed_river
   drawer.close();
 }
 
+bool Map::has_adjactent_owner(Vertex v, Punter owner) const {
+  for (auto& e : graph[v]) {
+    if (e.owner == owner) {
+      return true;
+    }
+  }
+  return false;
+}
+
 Vertex Map::vertex_id(Site size) {
   return std::lower_bound(sites.begin(), sites.end(), size) - sites.begin();
 }
