@@ -1,0 +1,3 @@
+cmake src
+make -j2
+mv scored_pidor_endspiel_solution punter
