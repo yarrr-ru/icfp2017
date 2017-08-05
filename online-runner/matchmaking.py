@@ -71,16 +71,17 @@ def run_match(port, strategies, max_rounds):
   while True:
     run_line = [script, str(port), random.choice(FUNNY_NAMES)]
     run_line.extend(strategies)
-    #print("running match:", run_line, file=sys.stderr)
+    print("running match:", run_line, file=sys.stderr)
     proc = subprocess.Popen(run_line, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = proc.communicate()
     if proc.returncode != 0:
-       #print("returned with nonzero exit code, retying", file=sys.stderr)
+       print("returned with nonzero exit code, retying", file=sys.stderr)
        continue
 
     lines = stdout.decode("utf-8").strip().split("\n")
     lines = lines[-len(strategies):]
     scores = []
+    was_updated = set()
     for line in lines:
       score, name = line.split()
       name = name[:name.rfind('.')]
@@ -92,18 +93,13 @@ def run_match(port, strategies, max_rounds):
 
       run_count_by_strategy[name] += 1
       all_points_by_strategy[name].append(points)
-      last_run_score_by_strategy[name] = int(score)
-    #print("success, scores:", scores)
-    break
+      if name not in was_updated:
+        last_run_score_by_strategy[name] = int(score)
+        was_updated.add(name)
 
-class StrategiesWidget:
-  def __call__(self, process, data):
-    strategy_lines = []
-    min_run_count = min(run_count_by_strategy.values())
-    for strategy, last_run_score in last_run_score_by_strategy.items():
-      points = sum(all_points_by_strategy[strategy][:min_run_count])
-      strategy_lines.append("%s:(%d,%d)" % (strategy, last_run_score, points))
-    return " ".join(strategy_lines)
+    print("match results:")
+    print("\n".join(lines))
+    break
 
 
 def main():
@@ -122,12 +118,6 @@ def main():
   run_count_by_strategy = dict.fromkeys(args.strategies, 0)
 
   random.seed()
-
-  progress_bar = progressbar.ProgressBar(
-      max_value=args.rounds*len(args.ports), widgets=[StrategiesWidget(), ' '])
-  progress_bar.widgets.extend(progress_bar.default_widgets())
-  progress = 0
-  progress_bar.update(0)
 
   for _ in range(args.rounds):
     for port in args.ports:
@@ -157,11 +147,9 @@ def main():
 
       run_match(port, strategies_to_run, args.rounds)
 
-      progress += 1
-      progress_bar.update(progress)
-
   min_run_count = min(run_count_by_strategy.values())
   print()
+  print("matchmaking results")
   print("run count per strategy:", min_run_count)
   for strategy in args.strategies:
     print(strategy, sum(all_points_by_strategy[strategy][:min_run_count]))
