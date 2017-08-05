@@ -312,9 +312,7 @@ Futures make_futures_random(const Map& map) {
 Futures make_futures_shortest_path(const Map& map) {
   Futures futures;
   if (map.punters < 16) {
-    if (static_cast<size_t>(map.punter) * 2 >= map.punters) {
-      return futures;
-    }
+    return futures;
   }
   size_t shortest_pair = 1e9;
   size_t best_u, best_v;
