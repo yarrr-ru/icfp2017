@@ -231,26 +231,32 @@ River make_move_scored_only_st(const Map& map) {
   return r;
 }
 
-River make_move_greed(const Map& map) {
+std::vector<std::pair<int64_t, River>> get_greed_moves(const Map& map, Punter owner) {
   auto river_owners = map.river_owners;
-
-  int64_t max_score = -1;
-  River best_river;
+  std::vector<std::pair<int64_t, River>> moves;
 
   for (size_t river_index = 0; river_index < river_owners.size(); ++river_index) {
-    if (river_owners[river_index] != kNoOwner) { continue;
+    if (river_owners[river_index] != kNoOwner) {
+      continue;
     }
 
-    river_owners[river_index] = map.punter;
-    auto score = map.get_score_by_river_owners(river_owners, map.punter);
+    river_owners[river_index] = owner;
+    auto score = map.get_score_by_river_owners(river_owners, owner);
     river_owners[river_index] = kNoOwner;
-    if (score > max_score) {
-      max_score = score;
-      best_river = map.get_river(river_index);
+    if (score > 0) {
+      moves.emplace_back(score, map.get_river(river_index));
     }
   }
-  assert(max_score >= 0);
-  return best_river;
+  std::sort(moves.rbegin(), moves.rend());
+  return moves;
+}
+
+River make_move_greed(const Map& map) {
+  auto moves = get_greed_moves(map, map.punters);
+  if (moves.empty()) {
+    return {0,0};
+  }
+  return moves.front().second;
 }
 
 River make_move_greed_st_maxcut(const Map& map) {

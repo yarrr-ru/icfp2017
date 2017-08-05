@@ -13,6 +13,7 @@ std::pair<int64_t, Path> get_path(
 Edge get_worst_edge(Vertex from, Vertex to, const Map& map);
 int64_t get_worst_edge_dist(Vertex from, Vertex to, const Map& map);
 std::pair<int64_t, Edge> get_worst_edge_all(Vertex from, Vertex to, const Map& map);
+std::vector<std::pair<int64_t, River>> get_greed_moves(const Map& map, Punter owner);
 
 River make_move_surround_all_lamdas(const Map& map);
 River make_move_greed_only_st(const Map& map);
