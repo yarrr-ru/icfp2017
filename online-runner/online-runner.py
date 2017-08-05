@@ -23,8 +23,7 @@ PROGRESS_BAR = None
 class OnlineRunner:
   def __init__(self, port, name, binary, index):
     self.port = port
-    self.name = name + "." + str(index)
-    self.log_name = binary + "." + str(index)
+    self.name = name
     self.binary = binary
     self.index = index
     self.protocol_log_file = open("protocol." + str(index) + ".log", "w")
@@ -110,6 +109,7 @@ class OnlineRunner:
     self.online_handshake(self.name)
     setup_json = self.receive_json()
     self.our_id = setup_json["punter"]
+    self.log_name = self.binary + "." + str(self.our_id)
     self.total_players = setup_json["punters"]
     self.total_rivers = len(setup_json["map"]["rivers"])
     print(self.log_name + ': received setup json our_id: {} total players: {}'.format(self.our_id, self.total_players),
@@ -186,7 +186,7 @@ def main():
     punter_name = "unknown player"
     if punter_id in OUR_IDS:
       index = OUR_IDS[punter_id]
-      punter_name = args.binaries[index] + "." + str(index)
+      punter_name = args.binaries[index] + "." + str(punter_id)
     scores.append((score["score"], punter_name))
   scores = sorted(scores, reverse=True)
   max_value = scores[0][0]
