@@ -115,11 +115,13 @@ def run_match(server, strategy, name):
 
 
 class ServerFilter:
-  def __init__(self, target_map):
+  def __init__(self, target_map, our_name):
     self.target_map = target_map
+    self.our_name = our_name
 
   def __call__(self, server):
-    return server.map_name == self.target_map and 'eager punter' not in server.player_names
+    return server.map_name == self.target_map and 'eager punter' not in server.player_names and \
+        self.our_name not in server.player_names
 
 
 def main():
@@ -146,7 +148,8 @@ def main():
         continue
 
       servers = parse_server_list()
-      free_servers = sorted(filter(ServerFilter(args.map), servers))
+      our_name = "mm:" + args.name
+      free_servers = sorted(filter(ServerFilter(args.map, our_name), servers))
       if len(free_servers) == 0:
         print("no free servers found for map:", args.map, file=sys.stderr)
         time.sleep(10)
@@ -159,7 +162,7 @@ def main():
         server = free_servers[i]
         thread = threading.Thread(
             target=run_match,
-            args=(server, args.strategy, "mm:" + args.name))
+            args=(server, args.strategy, our_name))
         thread.start()
         threads.append(thread)
 
