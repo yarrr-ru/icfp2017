@@ -55,7 +55,7 @@ std::pair<int64_t, Path> get_path(Vertex from, Vertex to, const Map& map, const 
   return {d, path};
 }
 
-Edge get_worst_edge(Vertex from, Vertex to, const Map& map) {
+std::pair<int64_t, Edge> get_worst_edge_all(Vertex from, Vertex to, const Map& map) {
   auto river_owners = map.river_owners;
   auto p = get_path(from, to, map, river_owners);
   if (p.first <= 0) {
@@ -66,13 +66,21 @@ Edge get_worst_edge(Vertex from, Vertex to, const Map& map) {
   for (auto& e_to_remove : p.second) {
     river_owners[e_to_remove.river_index] = map.punters;
     auto new_dist = get_path(from, to, map, river_owners).first;
-    if (new_dist == -1 || worst_dist < new_dist) {
+    if (worst_dist != -1 && (new_dist == -1 || worst_dist < new_dist)) {
       worst_dist = new_dist;
       e = e_to_remove;
     }
     river_owners[e_to_remove.river_index] = kNoOwner;
   }
-  return e;
+  return std::make_pair(worst_dist, e);
+}
+
+int64_t get_worst_edge_dist(Vertex from, Vertex to, const Map& map) {
+  return get_worst_edge_all(from, to, map).first;
+}
+
+Edge get_worst_edge(Vertex from, Vertex to, const Map& map) {
+  return get_worst_edge_all(from, to, map).second;
 }
 
 Paths make_paths_between_lambdas(const Map& map) {
@@ -298,6 +306,39 @@ Futures make_futures_random(const Map& map) {
       }
     }
   }
+  return futures;
+}
+
+Futures make_futures_shortest_path(const Map& map) {
+  Futures futures;
+  if (map.punters < 16) {
+    if (static_cast<size_t>(map.punter) * 2 >= map.punters) {
+      return futures;
+    }
+  }
+  size_t shortest_pair = 1e9;
+  size_t best_u, best_v;
+  for (size_t u = 0; u < map.graph.size(); ++u) {
+    if (!map.is_lambda[u]) {
+      continue;
+    }
+    for (size_t v = 0; v < u; ++v) {
+      if (!map.is_lambda[v]) {
+        continue;
+      }
+      size_t dist = map.get_distance_from_lambda(u, v);
+      if (dist < shortest_pair) {
+        shortest_pair = dist;
+        best_u = u;
+        best_v = v;
+      }
+    }
+  }
+  if (shortest_pair == 1e9) {
+    return futures;
+  }
+  futures.push_back(map.get_future(best_u, best_v));
+  futures.push_back(map.get_future(best_v, best_u));
   return futures;
 }
 
