@@ -95,17 +95,26 @@ Paths make_paths_between_lambdas(const Map& map) {
 }
 
 River make_move_surround_lamdas_with_paths(const Map& map, const Paths& paths) {
+  std::map<River, size_t> rating;
   for (auto& p : paths) {
     if (map.is_lambda[std::get<3>(p).front().from] ||
         map.is_lambda[std::get<3>(p).front().to]) {
-      return map.get_river(std::get<3>(p).front());
+      rating[map.get_river(std::get<3>(p).front())]++;
     }
     if (map.is_lambda[std::get<3>(p).back().from] ||
         map.is_lambda[std::get<3>(p).back().to]) {
-      return map.get_river(std::get<3>(p).back());
+      rating[map.get_river(std::get<3>(p).front())]++;
     }
   }
-  return {0, 0};
+  River r = {0, 0};
+  size_t max_r = 0;
+  for (auto& p : rating) {
+    if (p.second > max_r) {
+      max_r = p.second;
+      r = p.first;
+    }
+  }
+  return r;
 }
 
 River make_move_surround_all_lamdas(const Map& map) {
