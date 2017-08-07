@@ -1,3 +1,3 @@
 cmake src
 make -j2
-mv wise_pidor_solution punter
+mv wise_st_solution punter
