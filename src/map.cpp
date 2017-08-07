@@ -211,11 +211,9 @@ void Map::add_claim(const json& claim) {
   River r = make_river(claim);
   Punter p = claim["punter"];
   assert(static_cast<size_t>(p) < punters);
-  bool added = claims.emplace(r, p).second;
-  assert(added);
+  claims.emplace(r, p);
   std::swap(r.first, r.second);
-  added = claims.emplace(r, p).second;
-  assert(added);
+  claims.emplace(r, p);
 }
 
 std::vector<std::pair<size_t, size_t>> Map::add_moves(const json& new_moves) {
@@ -232,8 +230,16 @@ std::vector<std::pair<size_t, size_t>> Map::add_moves(const json& new_moves) {
         std::swap(our_river.first, our_river.second);
       }
       claimed_rivers.emplace_back(our_river);
-    } else {
-      assert(move.count("pass"));
+    } else if (move.count("splurge")) {
+      Punter path_punter = move["splurge"]["punter"];
+      auto route = move["splurge"]["route"];
+      json claim;
+      claim["punter"] = path_punter;
+      for (size_t i = 0; i + 1 < route.size(); ++i) {
+        claim["source"] = route[i];
+        claim["target"] = route[i + 1];
+        add_claim(claim);
+      }
     }
     moves.push_back(move);
   }
